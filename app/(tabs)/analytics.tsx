@@ -82,12 +82,12 @@ export default function AnalyticsScreen() {
   });
 
   const convertWeight = (kg: number) => {
-    return isMetric ? kg : kg * 2.20462;
+    return isMetric ? Math.round(kg) : Math.round(kg * 2.20462);
   };
 
   const formatWeight = (kg: number) => {
     const weight = convertWeight(kg);
-    return `${Math.round(weight)}${isMetric ? ' kg' : ' lbs'}`;
+    return `${weight}${isMetric ? ' kg' : ' lbs'}`;
   };
 
   // Get start date for nutrition data based on selected period

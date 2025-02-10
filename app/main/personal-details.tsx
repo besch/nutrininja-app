@@ -94,7 +94,7 @@ export default function PersonalDetailsScreen() {
   };
 
   const formatValue = (value: number | null, unit: string) => {
-    return value !== null ? `${value} ${unit}` : '-';
+    return value !== null ? `${Math.round(value)} ${unit}` : '-';
   };
 
   const handleGoalWeightChange = async (value: number) => {

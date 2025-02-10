@@ -61,12 +61,12 @@ export default function SettingsScreen() {
 
   const displayWeight = (kg: number) => {
     if (!kg) return '-';
-    return isMetric ? `${kg} kg` : `${Math.round(kg * 2.20462)} lbs`;
+    return isMetric ? `${Math.round(kg)} kg` : `${Math.round(kg * 2.20462)} lbs`;
   };
 
   const displayHeight = (cm: number) => {
     if (!cm) return '-';
-    if (isMetric) return `${cm} cm`;
+    if (isMetric) return `${Math.round(cm)} cm`;
     const inches = cm / 2.54;
     const feet = Math.floor(inches / 12);
     const remainingInches = Math.round(inches % 12);
