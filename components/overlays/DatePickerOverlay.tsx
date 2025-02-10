@@ -101,7 +101,10 @@ export default function DatePickerOverlay({
               width="100%"
               keyExtractor={(item) => item.value.toString()}
               renderItem={(props: RenderItemProps<PickerItem>) => (
-                <View style={styles.itemContainer}>
+                <View style={[
+                  styles.itemContainer,
+                  props.item.value === selectedMonth && styles.selectedItemContainer
+                ]}>
                   <Text style={styles.itemText}>{props.item.label}</Text>
                 </View>
               )}
@@ -123,7 +126,10 @@ export default function DatePickerOverlay({
               width="100%"
               keyExtractor={(item) => item.value.toString()}
               renderItem={(props: RenderItemProps<PickerItem>) => (
-                <View style={styles.itemContainer}>
+                <View style={[
+                  styles.itemContainer,
+                  props.item.value === selectedDay && styles.selectedItemContainer
+                ]}>
                   <Text style={styles.itemText}>{props.item.label}</Text>
                 </View>
               )}
@@ -145,7 +151,10 @@ export default function DatePickerOverlay({
               width="100%"
               keyExtractor={(item) => item.value.toString()}
               renderItem={(props: RenderItemProps<PickerItem>) => (
-                <View style={styles.itemContainer}>
+                <View style={[
+                  styles.itemContainer,
+                  props.item.value === selectedYear && styles.selectedItemContainer
+                ]}>
                   <Text style={styles.itemText}>{props.item.label}</Text>
                 </View>
               )}
@@ -211,10 +220,16 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20, // Add horizontal padding to all items
   },
   itemText: {
     color: "#000",
     fontSize: 16,
+  },
+  selectedItemContainer: {
+    backgroundColor: "#f5f5f5",
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
   },
   placeholder: {
     height: 200,
