@@ -39,7 +39,7 @@ export function PaywallStep({ onBack, onNext }: PaywallStepProps) {
           },
           onSkipHandler: () => {
             console.log('onSkipHandler Paywall skipped by user');
-            router.replace('/onboarding');
+            router.replace('/(tabs)');
           },
           onPresentHandler: () => {
             console.log('onPresentHandler Paywall presented successfully');
