@@ -1,0 +1,143 @@
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { Text } from '@rneui/themed';
+import { Feather } from '@expo/vector-icons';
+import * as Progress from 'react-native-progress';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+
+interface CaloriesSummaryProps {
+  isLoading: boolean;
+  remainingCalories?: number;
+  totalCalories?: number;
+}
+
+export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
+  isLoading,
+  remainingCalories = 0,
+  totalCalories = 0,
+}) => {
+  if (isLoading) {
+    return (
+      <View style={styles.mainCard}>
+        <View style={styles.loadingContainer}>
+          <LoadingSpinner />
+        </View>
+      </View>
+    );
+  }
+
+  // Calculate the goal calories (total + remaining when not over)
+  const goalCalories = remainingCalories < 0 ? totalCalories : (totalCalories + remainingCalories);
+
+  return (
+    <View style={styles.mainCard}>
+      <View style={styles.mainCardContent}>
+        <View style={styles.caloriesContainer}>
+          <Text style={[
+            styles.caloriesText,
+            remainingCalories < 0 && styles.negativeValue
+          ]}>
+            {Math.abs(remainingCalories)}
+          </Text>
+          <Text style={[
+            styles.caloriesLabel,
+            remainingCalories < 0 && styles.negativeValue
+          ]}>
+            {remainingCalories < 0 ? 'Calories over' : 'Calories left'}
+          </Text>
+        </View>
+        <View style={styles.circleProgress}>
+          {remainingCalories < 0 ? (
+            <Progress.Circle
+              size={60}
+              progress={Math.min(1, totalCalories ? Math.abs(remainingCalories) / totalCalories : 0)}
+              thickness={7}
+              color="#FF6B6B"
+              unfilledColor="#000"
+              borderWidth={0}
+              strokeCap="round"
+              animated
+            />
+          ) : (
+            <Progress.Circle
+              size={60}
+              progress={Math.min(1, goalCalories ? totalCalories / goalCalories : 0)}
+              thickness={7}
+              color="#000"
+              unfilledColor="#eee"
+              borderWidth={0}
+              animated
+              strokeCap="round"
+            />
+          )}
+          <View style={styles.circleIcon}>
+            <Feather name="activity" size={24} color={remainingCalories < 0 ? "#FF6B6B" : "#000"} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  mainCard: {
+    backgroundColor: "#fff",
+    margin: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    position: 'relative',
+    height: 100,
+  },
+  mainCardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    height: '100%',
+  },
+  caloriesContainer: {
+    flex: 1,
+  },
+  caloriesText: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  caloriesLabel: {
+    color: "#666",
+    fontSize: 13,
+  },
+  circleProgress: {
+    position: "relative",
+  },
+  circleIcon: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    zIndex: 1,
+  },
+  negativeValue: {
+    color: '#FF6B6B',
+  },
+}); 

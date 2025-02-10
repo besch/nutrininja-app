@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "Nutri Ninja",
+    "displayName": "Nutri Ninja",
+    "slug": "nutrininja",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "nutrininja",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.vino.nutrininja",
+      "supportsTablet": false,
+      "usesAppleSignIn": true,
+      "buildNumber": "3",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Nutri Ninja needs camera access to analyze your food and provide accurate nutritional information."
+      }
+    },
+    "android": {
+      "package": "com.vino.nutrininja",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "versionCode": 3
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-apple-authentication",
+      "expo-camera",
+      "expo-notifications",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
+        "react-native-appsflyer",
+        {
+          "shouldUseStrictMode": true
+        } 
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "90682491-9010-47a5-9fe8-ec2d4716f03a"
+      }
+    },
+    "owner": "besch1",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": false
+    }
+  }
+}

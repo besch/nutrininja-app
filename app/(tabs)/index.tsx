@@ -1,0 +1,220 @@
+import React, { useState, useCallback, useMemo } from "react";
+import { StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { useRouter } from "expo-router";
+import moment, { Moment } from "moment";
+import { AddFoodOverlay } from "@/components/AddFoodOverlay";
+import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
+import { api } from "@/utils/api";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCameraPermissions } from "expo-camera";
+import { useSelector, useDispatch } from "react-redux";
+import { selectIsMetric } from "@/store/userSlice";
+import { selectPendingMeals } from '@/store/analysisSlice';
+import { useSelectedDate, setSelectedDate } from '@/store/userSlice';
+import type { Meal } from "@/types";
+import {
+  Header,
+  CalendarStrip,
+  CaloriesSummary,
+  MacrosSummary,
+  RecentMeals
+} from '@/components/home';
+
+export default function HomeScreen() {
+  const [showMenu, setShowMenu] = useState(false);
+  const [showWeightOverlay, setShowWeightOverlay] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [minDate, setMinDate] = useState(moment().subtract(10, "days"));
+  const [maxDate, setMaxDate] = useState(moment().add(10, "days"));
+  const isMetric = useSelector(selectIsMetric);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
+  const [permission, requestPermission] = useCameraPermissions();
+  const pendingMeals = useSelector(selectPendingMeals);
+  const selectedDate = useSelectedDate();
+
+  const dateStr = useMemo(() => selectedDate.format('YYYY-MM-DD'), [selectedDate]);
+
+  const { data: meals = [], isLoading: mealsLoading } = useQuery({
+    queryKey: ['meals', dateStr],
+    queryFn: () => api.meals.getMealsByDate(dateStr),
+    refetchInterval: (query) => {
+      const data = query.state.data as Meal[] | undefined;
+      return data?.some(meal => meal.analysis_status === 'pending') ? 2000 : false;
+    },
+  });
+
+  const { data: weightData } = useQuery({
+    queryKey: ['weight', dateStr],
+    queryFn: () => api.weight.getByDate(dateStr),
+  });
+
+  const calculateDailyTotals = useCallback((mealsData: Meal[]) => {
+    return mealsData
+      .filter(meal => meal.analysis_status === 'completed')
+      .reduce((acc, meal) => ({
+        calories: acc.calories + meal.calories,
+        proteins: acc.proteins + meal.proteins,
+        carbs: acc.carbs + meal.carbs,
+        fats: acc.fats + meal.fats,
+      }), {
+        calories: 0,
+        proteins: 0,
+        carbs: 0,
+        fats: 0,
+      });
+  }, []);
+
+  const { data: progressData } = useQuery({
+    queryKey: ['progress', meals],
+    queryFn: async () => {
+      const progressResponse = await api.user.getDailyProgress();
+      if (!progressResponse || !progressResponse.goals) {
+        throw new Error('Invalid progress response');
+      }
+
+      // Check if any meals are still being analyzed
+      const hasPendingAnalysis = meals.some((meal: Meal) => meal.analysis_status === 'pending');
+      
+      // Only calculate totals if no meals are pending analysis
+      const dailyTotals = calculateDailyTotals(meals);
+
+      return {
+        ...progressResponse,
+        progress: {
+          remainingCalories: hasPendingAnalysis ? 0 : (progressResponse.goals.dailyCalorieGoal || 0) - dailyTotals.calories,
+          remainingProteins: hasPendingAnalysis ? 0 : (progressResponse.goals.proteinGoal || 0) - dailyTotals.proteins,
+          remainingCarbs: hasPendingAnalysis ? 0 : (progressResponse.goals.carbsGoal || 0) - dailyTotals.carbs,
+          remainingFats: hasPendingAnalysis ? 0 : (progressResponse.goals.fatsGoal || 0) - dailyTotals.fats,
+          totalCalories: hasPendingAnalysis ? 0 : dailyTotals.calories,
+          totalProteins: hasPendingAnalysis ? 0 : dailyTotals.proteins,
+          totalCarbs: hasPendingAnalysis ? 0 : dailyTotals.carbs,
+          totalFats: hasPendingAnalysis ? 0 : dailyTotals.fats,
+        }
+      };
+    },
+    enabled: meals.length > 0,
+  });
+
+  const handleDateSelected = useCallback((date: Moment) => {
+    dispatch(setSelectedDate(date.format('YYYY-MM-DD')));
+  }, [dispatch]);
+
+  const handleCalendarEndReached = useCallback((end: 'left' | 'right') => {
+    if (end === 'left') {
+      setMinDate(prev => prev.clone().subtract(10, "days"));
+    } else {
+      setMaxDate(prev => prev.clone().add(10, "days"));
+    }
+  }, []);
+
+  const handleAddMeal = useCallback(async () => {
+    await requestPermission();
+
+    router.push({
+      pathname: "/main/camera",
+      params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
+    });
+  }, [router, selectedDate, permission, requestPermission]);
+
+  const handleCloseMenu = useCallback(() => {
+    setShowMenu(false);
+  }, []);
+
+  const handleWeightCheckin = useCallback(async (weight: number) => {
+    // Convert from lbs to kg if using imperial
+    const weightInKg = isMetric ? weight : weight / 2.20462;
+    await api.weight.checkIn(Number(weightInKg.toFixed(1)), selectedDate.format('YYYY-MM-DD'));
+    queryClient.invalidateQueries({ queryKey: ['weight', selectedDate.format('YYYY-MM-DD')] });
+  }, [selectedDate, queryClient, isMetric]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['meals', dateStr] }),
+      queryClient.invalidateQueries({ queryKey: ['weight', dateStr] }),
+      queryClient.invalidateQueries({ queryKey: ['progress'] }),
+    ]);
+    setRefreshing(false);
+  }, [queryClient, dateStr]);
+
+  const handleMealPress = useCallback((id: string) => {
+    router.push({
+      pathname: "/main/food-details",
+      params: { id }
+    });
+  }, [router]);
+
+  return (
+    <>
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#000"
+          />
+        }
+      >
+        <Header />
+
+        <CalendarStrip
+          selectedDate={selectedDate}
+          onDateSelected={handleDateSelected}
+          minDate={minDate}
+          maxDate={maxDate}
+          onCalendarEndReached={handleCalendarEndReached}
+        />
+
+        <CaloriesSummary
+          isLoading={mealsLoading}
+          remainingCalories={progressData?.progress?.remainingCalories}
+          totalCalories={progressData?.progress?.totalCalories}
+        />
+
+        <MacrosSummary
+          isLoading={mealsLoading}
+          proteins={{
+            remaining: progressData?.progress?.remainingProteins || 0,
+            total: progressData?.progress?.totalProteins || 0
+          }}
+          carbs={{
+            remaining: progressData?.progress?.remainingCarbs || 0,
+            total: progressData?.progress?.totalCarbs || 0
+          }}
+          fats={{
+            remaining: progressData?.progress?.remainingFats || 0,
+            total: progressData?.progress?.totalFats || 0
+          }}
+        />
+
+        <RecentMeals
+          meals={meals}
+          isLoading={mealsLoading}
+          pendingMeals={pendingMeals}
+          onMealPress={handleMealPress}
+        />
+      </ScrollView>
+
+      <AddFoodOverlay visible={showMenu} onClose={handleCloseMenu} />
+      <NumericInputOverlay
+        isVisible={showWeightOverlay}
+        onClose={() => setShowWeightOverlay(false)}
+        onSave={handleWeightCheckin}
+        title="Weight Check-in"
+        subtitle={selectedDate.format('MMM D, YYYY')}
+        initialValue={weightData?.weight ? (isMetric ? weightData.weight : weightData.weight * 2.20462) : 0}
+        unit={isMetric ? "kg" : "lbs"}
+      />
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+});

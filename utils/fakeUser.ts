@@ -1,0 +1,16 @@
+export const createFakeUser = {
+  email: "test@test.com",
+  name: "Test User",
+  age: 25,
+  gender: "male",
+  height: 175,
+  weight: 100,
+  daily_calorie_goal: 2000,
+  protein_goal: 700,
+  carbs_goal: 800,
+  fats_goal: 500,
+  target_weight: 80,
+  weekly_weight_goal: 0.3,
+  notification_enabled: true,
+  created_at: 1735887154285,
+};
