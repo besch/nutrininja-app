@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { DailyProgressResponse } from '@/types';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 type ApiOptions = RequestInit & {
   requireAuth?: boolean;
@@ -129,10 +130,17 @@ export const api = {
     },
 
     createMeal: async (image: string, date?: string, timestamp?: string) => {
+      // Compress image before uploading
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        image,
+        [{ resize: { width: 600 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
       const formData = new FormData();
 
       formData.append("file", {
-        uri: image,
+        uri: compressedImage.uri,
         type: "image/jpeg",
         name: "meal.jpg",
       } as any);
@@ -174,9 +182,16 @@ export const api = {
     },
 
     createMealWithoutAnalysis: async (imageUri: string, selectedDate?: string, timestamp?: string) => {
+      // Compress image before uploading
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 828 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
       const formData = new FormData();
       formData.append('image', {
-        uri: imageUri,
+        uri: compressedImage.uri,
         type: 'image/jpeg',
         name: 'meal.jpg',
       } as any);
