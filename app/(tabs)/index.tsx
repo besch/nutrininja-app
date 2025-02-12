@@ -43,14 +43,15 @@ export default function HomeScreen() {
       const data = query.state.data as Meal[] | undefined;
       return data?.some(meal => meal.analysis_status === 'pending') ? 2000 : false;
     },
-    gcTime: 0,
-    staleTime: 0
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
   });
 
   const { data: weightData } = useQuery({
     queryKey: ['weight', dateStr],
     queryFn: () => api.weight.getByDate(dateStr),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
   });
 
   const calculateDailyTotals = useCallback((mealsData: Meal[]) => {
@@ -93,9 +94,9 @@ export default function HomeScreen() {
         }
       };
     },
-    gcTime: 0,
     enabled: !mealsLoading,
-    staleTime: 0
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
   });
 
   const summaryProps = useMemo(() => ({
