@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { Text } from "@rneui/themed";
 import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
@@ -33,6 +33,7 @@ export default function FoodDetailsScreen() {
   const [analysisResults, setAnalysisResults] = useState<Partial<Meal> | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const hasLoadedImageRef = useRef<{[key: string]: boolean}>({});
 
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
@@ -242,12 +243,23 @@ export default function FoodDetailsScreen() {
           {/* Image */}
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: meal.image_url }}
+              source={{ 
+                uri: meal.image_url,
+                cache: 'force-cache'
+              }}
               style={styles.foodImage}
-              onLoadStart={() => setIsImageLoading(true)}
-              onLoadEnd={() => setIsImageLoading(false)}
+              onLoadStart={() => {
+                // Only show loading state if image hasn't been loaded before
+                if (!hasLoadedImageRef.current[meal.image_url]) {
+                  setIsImageLoading(true);
+                }
+              }}
+              onLoadEnd={() => {
+                setIsImageLoading(false);
+                hasLoadedImageRef.current[meal.image_url] = true;
+              }}
             />
-            {isImageLoading && (
+            {isImageLoading && !hasLoadedImageRef.current[meal.image_url] && (
               <View style={styles.imageLoadingContainer}>
                 <LoadingSpinner />
               </View>
