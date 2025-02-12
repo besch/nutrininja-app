@@ -18,6 +18,10 @@ import type { Meal } from "@/types";
 import * as Progress from "react-native-progress";
 import { Button } from "@/components/ui/Button";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 export default function FoodDetailsScreen() {
   const router = useRouter();
@@ -271,19 +275,11 @@ export default function FoodDetailsScreen() {
           <View style={styles.topRow}>
             <View style={styles.titleContainer}>
               {isAnalyzing ? (
-                <View style={styles.analyzingContainer}>
-                  <Text style={styles.analyzingText}>Analyzing your meal...</Text>
-                  <View style={styles.progressContainer}>
-                    <Progress.Bar
-                      indeterminate
-                      width={200}
-                      color="#000"
-                      unfilledColor="#E0E0E0"
-                      borderColor="#000"
-                      style={styles.analyzingProgress}
-                    />
-                  </View>
-                </View>
+                <ShimmerPlaceholder
+                  style={styles.shimmerName}
+                  width={200}
+                  height={28}
+                />
               ) : analysisFailed ? (
                 <View style={styles.errorContainer}>
                   <View style={styles.errorHeader}>
@@ -324,11 +320,20 @@ export default function FoodDetailsScreen() {
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Calories</Text>
-                <Text style={styles.macroValue}>{meal.calories}</Text>
+                {isAnalyzing ? (
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                ) : (
+                  <Text style={styles.macroValue}>{meal.calories}</Text>
+                )}
               </View>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, isAnalyzing && styles.disabledButton]}
                 onPress={() => handleEditMacro("calories")}
+                disabled={isAnalyzing}
               >
                 <Feather name="edit-2" size={16} color="white" />
               </TouchableOpacity>
@@ -341,11 +346,20 @@ export default function FoodDetailsScreen() {
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Carbs</Text>
-                <Text style={styles.macroValue}>{meal.carbs}g</Text>
+                {isAnalyzing ? (
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                ) : (
+                  <Text style={styles.macroValue}>{meal.carbs}g</Text>
+                )}
               </View>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, isAnalyzing && styles.disabledButton]}
                 onPress={() => handleEditMacro("carbs")}
+                disabled={isAnalyzing}
               >
                 <Feather name="edit-2" size={16} color="white" />
               </TouchableOpacity>
@@ -358,11 +372,20 @@ export default function FoodDetailsScreen() {
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Protein</Text>
-                <Text style={styles.macroValue}>{meal.proteins}g</Text>
+                {isAnalyzing ? (
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                ) : (
+                  <Text style={styles.macroValue}>{meal.proteins}g</Text>
+                )}
               </View>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, isAnalyzing && styles.disabledButton]}
                 onPress={() => handleEditMacro("proteins")}
+                disabled={isAnalyzing}
               >
                 <Feather name="edit-2" size={16} color="white" />
               </TouchableOpacity>
@@ -375,11 +398,20 @@ export default function FoodDetailsScreen() {
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Fats</Text>
-                <Text style={styles.macroValue}>{meal.fats}g</Text>
+                {isAnalyzing ? (
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                ) : (
+                  <Text style={styles.macroValue}>{meal.fats}g</Text>
+                )}
               </View>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, isAnalyzing && styles.disabledButton]}
                 onPress={() => handleEditMacro("fats")}
+                disabled={isAnalyzing}
               >
                 <Feather name="edit-2" size={16} color="white" />
               </TouchableOpacity>
@@ -651,7 +683,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   disabledButton: {
-    opacity: 0.5,
+    backgroundColor: '#E0E0E0',
   },
   disabledText: {
     color: "#999",
@@ -737,5 +769,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 999,
+  },
+  shimmerName: {
+    borderRadius: 8,
+    marginVertical: 4,
+  },
+  shimmerMacro: {
+    borderRadius: 6,
+    marginTop: 2,
   },
 });
