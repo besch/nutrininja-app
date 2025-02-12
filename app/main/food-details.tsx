@@ -30,7 +30,6 @@ export default function FoodDetailsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAnalysisResults, setShowAnalysisResults] = useState(false);
   const [showFullName, setShowFullName] = useState(false);
-  const [isTextTruncated, setIsTextTruncated] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<Partial<Meal> | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -262,12 +261,6 @@ export default function FoodDetailsScreen() {
                     style={styles.foodName} 
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    onTextLayout={(e) => {
-                      if (e.nativeEvent.lines.length > 0) {
-                        const text = e.nativeEvent.lines[0];
-                        setIsTextTruncated(text.width >= text.x + text.width);
-                      }
-                    }}
                   >
                     {meal.name}
                   </Text>
