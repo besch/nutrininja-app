@@ -43,6 +43,8 @@ export default function HomeScreen() {
       const data = query.state.data as Meal[] | undefined;
       return data?.some(meal => meal.analysis_status === 'pending') ? 2000 : false;
     },
+    gcTime: Infinity,
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: weightData } = useQuery({
@@ -74,27 +76,26 @@ export default function HomeScreen() {
         throw new Error('Invalid progress response');
       }
 
-      // Check if any meals are still being analyzed
-      const hasPendingAnalysis = meals.some((meal: Meal) => meal.analysis_status === 'pending');
-      
-      // Only calculate totals if no meals are pending analysis
+      // Calculate totals only from completed meals
       const dailyTotals = calculateDailyTotals(meals);
 
       return {
         ...progressResponse,
         progress: {
-          remainingCalories: hasPendingAnalysis ? 0 : (progressResponse.goals.dailyCalorieGoal || 0) - dailyTotals.calories,
-          remainingProteins: hasPendingAnalysis ? 0 : (progressResponse.goals.proteinGoal || 0) - dailyTotals.proteins,
-          remainingCarbs: hasPendingAnalysis ? 0 : (progressResponse.goals.carbsGoal || 0) - dailyTotals.carbs,
-          remainingFats: hasPendingAnalysis ? 0 : (progressResponse.goals.fatsGoal || 0) - dailyTotals.fats,
-          totalCalories: hasPendingAnalysis ? 0 : dailyTotals.calories,
-          totalProteins: hasPendingAnalysis ? 0 : dailyTotals.proteins,
-          totalCarbs: hasPendingAnalysis ? 0 : dailyTotals.carbs,
-          totalFats: hasPendingAnalysis ? 0 : dailyTotals.fats,
+          remainingCalories: (progressResponse.goals.dailyCalorieGoal || 0) - dailyTotals.calories,
+          remainingProteins: (progressResponse.goals.proteinGoal || 0) - dailyTotals.proteins,
+          remainingCarbs: (progressResponse.goals.carbsGoal || 0) - dailyTotals.carbs,
+          remainingFats: (progressResponse.goals.fatsGoal || 0) - dailyTotals.fats,
+          totalCalories: dailyTotals.calories,
+          totalProteins: dailyTotals.proteins,
+          totalCarbs: dailyTotals.carbs,
+          totalFats: dailyTotals.fats,
         }
       };
     },
     enabled: meals.length > 0,
+    gcTime: Infinity,
+    placeholderData: (previousData) => previousData,
   });
 
   const handleDateSelected = useCallback((date: Moment) => {
