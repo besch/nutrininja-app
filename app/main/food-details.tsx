@@ -57,8 +57,38 @@ export default function FoodDetailsScreen() {
     onSuccess: (updatedMeal) => {
       dispatch(updateMealInStore(updatedMeal));
       const updatedMealDate = moment(updatedMeal.date).format('YYYY-MM-DD');
-      queryClient.invalidateQueries({ queryKey: ['meal', id] });
-      queryClient.invalidateQueries({ queryKey: ['meals', updatedMealDate] });
+      
+      // Invalidate all queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['meal', id],
+        exact: true,
+        type: 'all'
+      });
+      
+      queryClient.invalidateQueries({ 
+        queryKey: ['meals', updatedMealDate],
+        exact: true,
+        type: 'all'
+      });
+      
+      queryClient.invalidateQueries({ 
+        queryKey: ['meals-summary'],
+        exact: true,
+        type: 'all'
+      });
+      
+      // Invalidate all progress queries for this date
+      queryClient.invalidateQueries({ 
+        queryKey: ['progress', updatedMealDate],
+        type: 'all'
+      });
+
+      // Force immediate refetch of meals
+      queryClient.refetchQueries({ 
+        queryKey: ['meals', updatedMealDate],
+        exact: true,
+        type: 'active'
+      });
     },
   });
 
@@ -91,6 +121,8 @@ export default function FoodDetailsScreen() {
     onSuccess: () => {
       const mealDate = moment(meal.date).format('YYYY-MM-DD');
       queryClient.invalidateQueries({ queryKey: ['meals', mealDate] });
+      queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['progress', mealDate] });
       router.back();
     },
   });
@@ -147,6 +179,8 @@ export default function FoodDetailsScreen() {
       const confirmMealDate = moment(meal.date).format('YYYY-MM-DD');
       queryClient.invalidateQueries({ queryKey: ['meal', id] });
       queryClient.invalidateQueries({ queryKey: ['meals', confirmMealDate] });
+      queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['progress', confirmMealDate] });
       setShowAnalysisResults(false);
       setAnalysisResults(null);
     } catch (error) {

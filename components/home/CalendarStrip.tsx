@@ -1,7 +1,10 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import CalendarStripLib from 'react-native-calendar-strip';
+import React, { useMemo } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import CalendarStripLib, { IDayComponentProps } from 'react-native-calendar-strip';
 import moment, { Moment } from 'moment';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/utils/api';
+import Svg, { Circle } from 'react-native-svg';
 
 interface CalendarStripProps {
   selectedDate: Moment;
@@ -9,7 +12,89 @@ interface CalendarStripProps {
   minDate: Moment;
   maxDate: Moment;
   onCalendarEndReached: (end: 'left' | 'right') => void;
+  dailyCalorieGoal?: number;
 }
+
+interface DayCalorieProgress {
+  totalCalories: number;
+}
+
+const DayComponent = ({ 
+  date, 
+  calorieData, 
+  dailyCalorieGoal,
+  isSelected,
+  isToday,
+  onDateSelected
+}: { 
+  date: string, 
+  calorieData?: Record<string, DayCalorieProgress>,
+  dailyCalorieGoal: number,
+  isSelected?: boolean,
+  isToday: boolean,
+  onDateSelected: (date: Moment) => void
+}) => {
+  const momentDate = moment(date);
+  const dateStr = momentDate.format('YYYY-MM-DD');
+  const dayData = calorieData?.[dateStr];
+  const progress = dayData?.totalCalories ? Math.min((dayData.totalCalories / dailyCalorieGoal) * 100, 100) : 0;
+  const isOverGoal = dayData?.totalCalories ? dayData.totalCalories > dailyCalorieGoal : false;
+  
+  const radius = 16;
+  const strokeWidth = 3;
+  const circumference = 2 * Math.PI * radius;
+  const progressOffset = circumference - (progress / 100) * circumference;
+
+  const handlePress = () => {
+    onDateSelected(momentDate);
+  };
+
+  return (
+    <TouchableOpacity 
+      style={styles.dayContainer}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <Text style={[
+        styles.dayName,
+        isToday && styles.todayText
+      ]}>
+        {momentDate.format('ddd')}
+      </Text>
+      <View style={styles.dateContainer}>
+        <Svg width={radius * 2 + strokeWidth * 2} height={radius * 2 + strokeWidth * 2}>
+          {(dayData || isToday) && (
+            <Circle
+              cx={radius + strokeWidth}
+              cy={radius + strokeWidth}
+              r={radius}
+              stroke={dayData ? (isOverGoal ? "#FF4B4B" : "#4CAF50") : "black"}
+              strokeWidth={strokeWidth}
+              fill={isSelected ? "black" : "transparent"}
+              strokeDasharray={dayData ? `${circumference} ${circumference}` : undefined}
+              strokeDashoffset={dayData ? progressOffset : undefined}
+            />
+          )}
+          <Circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius - strokeWidth / 2}
+            fill={isSelected ? "black" : "transparent"}
+          />
+        </Svg>
+        <View style={styles.dateNumberContainer}>
+          <Text style={[
+            styles.dateNumberText,
+            isToday && styles.todayText,
+            isSelected && styles.selectedDateText
+          ]}>
+            {momentDate.format('D')}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export const CalendarStrip: React.FC<CalendarStripProps> = ({
   selectedDate,
@@ -17,80 +102,48 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
   minDate,
   maxDate,
   onCalendarEndReached,
+  dailyCalorieGoal = 2000,
 }) => {
+  const { data: calorieData } = useQuery({
+    queryKey: ['meals-summary', minDate, maxDate],
+    queryFn: async () => {
+      const data = await api.meals.getMealsByDateRange(
+        minDate.format('YYYY-MM-DD'),
+        maxDate.format('YYYY-MM-DD')
+      );
+      return data as Record<string, DayCalorieProgress>;
+    },
+  });
+
   return (
     <CalendarStripLib
       calendarAnimation={{ type: "sequence", duration: 30 }}
-      daySelectionAnimation={{
-        type: "border",
-        duration: 200,
-        borderWidth: 0,
-        borderHighlightColor: "transparent",
-      }}
       style={styles.calendar}
       calendarHeaderStyle={{ display: "none" }}
-      dateNumberStyle={{ 
-        color: "#666666", 
-        fontSize: 16,
-        width: 32,
-        height: 32,
-        textAlign: "center",
-        lineHeight: 32,
-      }}
-      dateNameStyle={{ 
-        color: "#666666", 
-        fontSize: 12,
-        marginTop: 4
-      }}
-      highlightDateNumberStyle={{
-        color: "white",
-        backgroundColor: "black",
-        width: 32,
-        height: 32,
-        textAlign: "center",
-        lineHeight: 32,
-        borderRadius: 16,
-        overflow: "hidden",
-        fontSize: 16,
-      }}
-      highlightDateNameStyle={{ 
-        color: "#666666", 
-        fontSize: 12,
-        marginTop: 4
-      }}
       styleWeekend={false}
-      customDatesStyles={[
-        {
-          date: moment(),
-          dateNumberStyle: {
-            color: "#666666",
-            fontSize: 16,
-            width: 32,
-            height: 32,
-            textAlign: "center",
-            lineHeight: 32,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: "black",
-            overflow: "hidden",
-          },
-        },
-      ]}
       selectedDate={selectedDate}
       onDateSelected={onDateSelected}
       useNativeDriver={true}
       scrollable={true}
-      dayComponentHeight={60}
+      dayComponentHeight={80}
       leftSelector={<View />}
       rightSelector={<View />}
       minDate={minDate}
       maxDate={maxDate}
-      showDayName={true}
-      showDayNumber={true}
       scrollerPaging={true}
       startingDate={moment().subtract(3, "days")}
       scrollToOnSetSelectedDate={false}
       updateWeek={true}
+      dayComponent={(props: IDayComponentProps) => (
+        <DayComponent
+          date={props.date.toString()}
+          calorieData={calorieData}
+          dailyCalorieGoal={dailyCalorieGoal}
+          isSelected={props.selected}
+          isToday={moment(props.date.toString()).isSame(moment(), 'day')}
+          onDateSelected={onDateSelected}
+        />
+      )}
       onWeekScrollEnd={(start, end) => {
         if (moment(start).isSame(minDate, 'day')) {
           onCalendarEndReached('left');
@@ -105,5 +158,38 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 const styles = StyleSheet.create({
   calendar: {
     height: 90,
+    paddingTop: 10,
+  },
+  dayContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 80,
+  },
+  dayName: {
+    color: "#666666",
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  dateContainer: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateNumberContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateNumberText: {
+    color: "#666666",
+    fontSize: 16,
+  },
+  selectedDateText: {
+    color: 'white',
+  },
+  todayText: {
+    color: 'black',
+    fontWeight: '600',
   },
 }); 

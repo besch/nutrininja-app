@@ -112,6 +112,10 @@ export const api = {
       return fetchApi(url);
     },
 
+    getMealsByDateRange: async (startDate: string, endDate: string) => {
+      return fetchApi(`/api/meals?startDate=${startDate}&endDate=${endDate}`);
+    },
+
     getMealById: async (id: string) => {
       return fetchApi(`/api/meals/${id}`);
     },

@@ -60,7 +60,12 @@ export const CameraScreen = () => {
       trackMealAdded(true, 'camera');
 
       // Start analysis in background
-      api.meals.triggerAnalysis(mealId).catch(error => {
+      api.meals.triggerAnalysis(mealId).then(() => {
+        // Invalidate both meals and meals-summary queries after analysis is complete
+        const dateToRefresh = selectedDate || moment().format('YYYY-MM-DD');
+        queryClient.invalidateQueries({ queryKey: ['meals', dateToRefresh] });
+        queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
+      }).catch(error => {
         dispatch(setMealAnalysisStatus({ 
           mealId, 
           status: 'failed',

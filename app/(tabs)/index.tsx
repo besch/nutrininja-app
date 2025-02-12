@@ -43,13 +43,14 @@ export default function HomeScreen() {
       const data = query.state.data as Meal[] | undefined;
       return data?.some(meal => meal.analysis_status === 'pending') ? 2000 : false;
     },
-    gcTime: Infinity,
-    placeholderData: (previousData) => previousData,
+    gcTime: 0,
+    staleTime: 0
   });
 
   const { data: weightData } = useQuery({
     queryKey: ['weight', dateStr],
     queryFn: () => api.weight.getByDate(dateStr),
+    staleTime: 0,
   });
 
   const calculateDailyTotals = useCallback((mealsData: Meal[]) => {
@@ -68,16 +69,15 @@ export default function HomeScreen() {
       });
   }, []);
 
-  const { data: progressData } = useQuery({
-    queryKey: ['progress', meals],
+  const dailyTotals = useMemo(() => calculateDailyTotals(meals), [meals, calculateDailyTotals]);
+
+  const { data: progressData, refetch: refetchProgress } = useQuery({
+    queryKey: ['progress', dateStr, dailyTotals],
     queryFn: async () => {
       const progressResponse = await api.user.getDailyProgress();
       if (!progressResponse || !progressResponse.goals) {
         throw new Error('Invalid progress response');
       }
-
-      // Calculate totals only from completed meals
-      const dailyTotals = calculateDailyTotals(meals);
 
       return {
         ...progressResponse,
@@ -93,10 +93,40 @@ export default function HomeScreen() {
         }
       };
     },
-    enabled: meals.length > 0,
-    gcTime: Infinity,
-    placeholderData: (previousData) => previousData,
+    gcTime: 0,
+    enabled: !mealsLoading,
+    staleTime: 0
   });
+
+  const summaryProps = useMemo(() => ({
+    isLoading: mealsLoading,
+    remainingCalories: progressData?.progress?.remainingCalories,
+    totalCalories: progressData?.progress?.totalCalories
+  }), [mealsLoading, progressData?.progress?.remainingCalories, progressData?.progress?.totalCalories]);
+
+  const macroProps = useMemo(() => ({
+    isLoading: mealsLoading,
+    proteins: {
+      remaining: progressData?.progress?.remainingProteins || 0,
+      total: progressData?.progress?.totalProteins || 0
+    },
+    carbs: {
+      remaining: progressData?.progress?.remainingCarbs || 0,
+      total: progressData?.progress?.totalCarbs || 0
+    },
+    fats: {
+      remaining: progressData?.progress?.remainingFats || 0,
+      total: progressData?.progress?.totalFats || 0
+    }
+  }), [
+    mealsLoading,
+    progressData?.progress?.remainingProteins,
+    progressData?.progress?.totalProteins,
+    progressData?.progress?.remainingCarbs,
+    progressData?.progress?.totalCarbs,
+    progressData?.progress?.remainingFats,
+    progressData?.progress?.totalFats
+  ]);
 
   const handleDateSelected = useCallback((date: Moment) => {
     dispatch(setSelectedDate(date.format('YYYY-MM-DD')));
@@ -167,29 +197,12 @@ export default function HomeScreen() {
           minDate={minDate}
           maxDate={maxDate}
           onCalendarEndReached={handleCalendarEndReached}
+          dailyCalorieGoal={progressData?.goals?.dailyCalorieGoal}
         />
 
-        <CaloriesSummary
-          isLoading={mealsLoading}
-          remainingCalories={progressData?.progress?.remainingCalories}
-          totalCalories={progressData?.progress?.totalCalories}
-        />
+        <CaloriesSummary {...summaryProps} />
 
-        <MacrosSummary
-          isLoading={mealsLoading}
-          proteins={{
-            remaining: progressData?.progress?.remainingProteins || 0,
-            total: progressData?.progress?.totalProteins || 0
-          }}
-          carbs={{
-            remaining: progressData?.progress?.remainingCarbs || 0,
-            total: progressData?.progress?.totalCarbs || 0
-          }}
-          fats={{
-            remaining: progressData?.progress?.remainingFats || 0,
-            total: progressData?.progress?.totalFats || 0
-          }}
-        />
+        <MacrosSummary {...macroProps} />
 
         <RecentMeals
           meals={meals}
