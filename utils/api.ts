@@ -137,14 +137,14 @@ export const api = {
       // Compress image before uploading
       const compressedImage = await ImageManipulator.manipulateAsync(
         image,
-        [{ resize: { width: 600 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        [{ resize: { height: 600 } }],
+        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
       );
 
       const formData = new FormData();
 
       formData.append("file", {
-        uri: compressedImage.uri,
+        uri: image,
         type: "image/jpeg",
         name: "meal.jpg",
       } as any);
