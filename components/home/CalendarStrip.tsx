@@ -73,6 +73,7 @@ const DayComponent = ({
               fill={isSelected ? "black" : "transparent"}
               strokeDasharray={dayData ? `${circumference} ${circumference}` : undefined}
               strokeDashoffset={dayData ? progressOffset : undefined}
+              transform={`rotate(-90 ${radius + strokeWidth} ${radius + strokeWidth})`}
             />
           )}
           <Circle
