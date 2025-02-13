@@ -531,8 +531,8 @@ export default function AnalyticsScreen() {
                 noOfSections={4}
                 spacing={24}
                 hideRules
-                stackData={weekDates.map((_, index) => ({
-                  label: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][index],
+                stackData={weekDates.map((date, index) => ({
+                  label: moment(date).format('dd')[0],
                   stacks: [
                     {
                       value: dailyMacrosData[index].proteins * 4,
@@ -551,7 +551,7 @@ export default function AnalyticsScreen() {
                     }
                   ]
                 }))}
-                xAxisLabelTextStyle={{ color: '#666', fontSize: 12 }}
+                xAxisLabelTextStyle={{ color: '#666', fontSize: 12, textAlign: 'center', width: 30 }}
                 yAxisTextStyle={{ color: '#666', fontSize: 12 }}
                 maxValue={Math.max(...dailyCalories) * 1.2}
                 isAnimated
@@ -561,6 +561,9 @@ export default function AnalyticsScreen() {
                 yAxisColor={'#666'}
                 xAxisColor={'#666'}
                 barBorderRadius={0}
+                horizontal={false}
+                initialSpacing={24}
+                endSpacing={24}
               />
               <View style={styles.legendContainer}>
                 <View style={styles.legendItem}>
