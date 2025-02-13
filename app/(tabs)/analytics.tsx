@@ -45,16 +45,22 @@ export default function AnalyticsScreen() {
   const [showWeightGoalOverlay, setShowWeightGoalOverlay] = useState(false);
   const [showWeightOverlay, setShowWeightOverlay] = useState(false);
   const isMetric = useSelector(selectIsMetric);
-  const user = useSelector(selectUser);
   const isLoading = useSelector(selectIsLoading);
   const queryClient = useQueryClient();
   const dispatch = useDispatch<AppDispatch>();
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchUserData());
-  }, [dispatch]);
+  // Fetch user data with React Query
+  const { data: userData } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      const data = await api.user.getProfile();
+      dispatch(setUserData(data)); // Keep Redux in sync
+      return data;
+    },
+    staleTime: 0
+  });
 
   // Get days to fetch based on selected period
   const getDaysToFetch = () => {
@@ -78,7 +84,8 @@ export default function AnalyticsScreen() {
     queryFn: async () => {
       const response = await api.weight.getHistory(getDaysToFetch());
       return response;
-    }
+    },
+    staleTime: 0
   });
 
   const convertWeight = (kg: number) => {
@@ -221,17 +228,17 @@ export default function AnalyticsScreen() {
   const macros = calculateMacros(weeklyMeals);
 
   const calculateProgress = () => {
-    if (!user.weight || !user.target_weight) return 0;
+    if (!userData?.weight || !userData?.target_weight) return 0;
     
     // If current weight equals target, we're at 100%
-    if (user.weight === user.target_weight) return 100;
+    if (userData.weight === userData.target_weight) return 100;
     
     // Get the starting weight from weight history, or use current weight if no history
-    const startWeight = weightHistory.length > 0 ? weightHistory[0].weight : user.weight;
-    const totalChangeNeeded = Math.abs(startWeight - user.target_weight);
+    const startWeight = weightHistory.length > 0 ? weightHistory[0].weight : userData.weight;
+    const totalChangeNeeded = Math.abs(startWeight - userData.target_weight);
     
     // Calculate how much progress we've made
-    const progressMade = Math.abs(startWeight - user.weight);
+    const progressMade = Math.abs(startWeight - userData.weight);
     
     // Calculate percentage, capped at 100
     const percentage = Math.min((progressMade / totalChangeNeeded) * 100, 100);
@@ -240,12 +247,12 @@ export default function AnalyticsScreen() {
   };
 
   const getGoalStatus = () => {
-    if (!user.weight || !user.target_weight) return '';
+    if (!userData?.weight || !userData?.target_weight) return '';
     
-    const difference = Math.abs(user.weight - user.target_weight);
+    const difference = Math.abs(userData.weight - userData.target_weight);
     if (difference <= 0.5) return 'Goal achieved';
     
-    return user.weight > user.target_weight ? 'Weight loss needed' : 'Weight gain needed';
+    return userData.weight > userData.target_weight ? 'Weight loss needed' : 'Weight gain needed';
   };
 
   const TimePeriodSelector = ({ periods, selected, onSelect }: { 
@@ -277,10 +284,23 @@ export default function AnalyticsScreen() {
   const handleWeightGoalUpdate = async (newGoal: number) => {
     setIsUpdating(true);
     try {
-      const updatedData = await api.user.updateProfile({ target_weight: newGoal });
-      dispatch(setUserData(updatedData));
-      await dispatch(fetchUserData()).unwrap();
-      queryClient.invalidateQueries({ queryKey: ['weight-history'] });
+      const weightInKg = isMetric ? newGoal : newGoal / 2.20462;
+      
+      // Update profile with the new goal weight
+      await api.user.updateProfile({ target_weight: weightInKg });
+      
+      // Invalidate and refetch queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
+      ]);
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
+        queryClient.refetchQueries({ queryKey: ['weight-history'] })
+      ]);
+
+      setShowWeightGoalOverlay(false);
     } catch (error) {
       console.error('Error updating weight goal:', error);
     } finally {
@@ -291,17 +311,25 @@ export default function AnalyticsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
+      // Invalidate all queries
       await Promise.all([
-        dispatch(fetchUserData()).unwrap(),
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
         queryClient.invalidateQueries({ queryKey: ['weight-history'] }),
-        queryClient.invalidateQueries({ queryKey: ['meals'] }),
+        queryClient.invalidateQueries({ queryKey: ['meals'] })
+      ]);
+
+      // Refetch all queries
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
+        queryClient.refetchQueries({ queryKey: ['weight-history'] }),
+        queryClient.refetchQueries({ queryKey: ['meals'] })
       ]);
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
       setRefreshing(false);
     }
-  }, [dispatch, queryClient]);
+  }, [queryClient]);
 
   const handleUnitChange = async (value: boolean) => {
     try {
@@ -316,15 +344,28 @@ export default function AnalyticsScreen() {
     try {
       const weightInKg = isMetric ? weight : weight / 2.20462;
       await api.weight.checkIn(Number(weightInKg.toFixed(1)), moment().format('YYYY-MM-DD'));
-      const updatedData = await api.user.getProfile();
-      dispatch(setUserData(updatedData));
-      queryClient.invalidateQueries({ queryKey: ['weight-history'] });
+      
+      // Invalidate and refetch both queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
+      ]);
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
+        queryClient.refetchQueries({ queryKey: ['weight-history'] })
+      ]);
+
+      setShowWeightOverlay(false);
     } catch (error) {
       console.error('Error checking in weight:', error);
     } finally {
       setIsUpdating(false);
     }
   };
+
+  // Use userData instead of user from Redux
+  const user = userData || {};
 
   return (
     <ScrollView 

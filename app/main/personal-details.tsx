@@ -11,8 +11,9 @@ import DatePickerOverlay from "@/components/overlays/DatePickerOverlay";
 import { setUserData, selectUser, selectIsMetric, selectIsLoading, setUnitPreference, fetchUserData } from "@/store/userSlice";
 import { api } from "@/utils/api";
 import { AppDispatch } from "@/store";
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trackPersonalGoalSet } from '@/utils/appsFlyerEvents';
+import moment from 'moment';
 
 type EditField =
   | "goal_weight"
@@ -30,6 +31,7 @@ export default function PersonalDetailsScreen() {
   const user = useSelector(selectUser);
   const isLoading = useSelector(selectIsLoading);
   const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     dispatch(fetchUserData());
@@ -64,6 +66,10 @@ export default function PersonalDetailsScreen() {
       dispatch(setUserData(updatedData));
       // Track goal updates
       trackPersonalGoalSet(updatedData);
+      
+      // Invalidate and refetch queries to ensure all screens are updated
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['weight-history'] });
     },
   });
 
@@ -100,8 +106,25 @@ export default function PersonalDetailsScreen() {
   const handleGoalWeightChange = async (value: number) => {
     setIsUpdating(true);
     try {
-      setGoalWeight(value);
-      await updateProfileMutation.mutateAsync({ target_weight: value });
+      const weightInKg = isMetric ? value : value / 2.20462;
+      
+      // Update profile with the new goal weight
+      await updateProfileMutation.mutateAsync({ target_weight: weightInKg });
+      
+      // Invalidate and refetch queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
+      ]);
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
+        queryClient.refetchQueries({ queryKey: ['weight-history'] })
+      ]);
+
+      setGoalWeight(weightInKg);
+    } catch (error) {
+      console.error('Error updating goal weight:', error);
     } finally {
       setIsUpdating(false);
     }
@@ -110,8 +133,24 @@ export default function PersonalDetailsScreen() {
   const handleCurrentWeightChange = async (value: number) => {
     setIsUpdating(true);
     try {
-      setCurrentWeight(value);
-      await updateProfileMutation.mutateAsync({ weight: value });
+      const weightInKg = isMetric ? value : value / 2.20462;
+      
+      // First create a weight check-in
+      await api.weight.checkIn(Number(weightInKg.toFixed(1)), moment().format('YYYY-MM-DD'));
+      
+      // Then update the profile
+      await updateProfileMutation.mutateAsync({ weight: weightInKg });
+      
+      // Invalidate and refetch relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
+      ]);
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
+        queryClient.refetchQueries({ queryKey: ['weight-history'] })
+      ]);
     } finally {
       setIsUpdating(false);
     }
