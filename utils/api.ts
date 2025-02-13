@@ -133,53 +133,6 @@ export const api = {
       });
     },
 
-    createMeal: async (image: string, date?: string, timestamp?: string) => {
-      // Compress image before uploading
-      const compressedImage = await ImageManipulator.manipulateAsync(
-        image,
-        [{ resize: { height: 600 } }],
-        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
-      );
-
-      const formData = new FormData();
-
-      formData.append("file", {
-        uri: image,
-        type: "image/jpeg",
-        name: "meal.jpg",
-      } as any);
-      
-      if (date) {
-        formData.append("date", date);
-      }
-
-      if (timestamp) {
-        formData.append("timestamp", timestamp);
-      }
-
-      console.log("Creating meal with formData:", {
-        imageSize: await FileSystem.getInfoAsync(image),
-        date,
-        timestamp,
-      });
-
-      try {
-        const response = await fetchApi("/api/meals", {
-          method: "POST",
-          headers: {
-            "Content-Type": "multipart/form-data",
-            "Accept": "application/json",
-          },
-          body: formData as any,
-        });
-        console.log("Meal creation response:", response);
-        return response;
-      } catch (error) {
-        console.error("Meal creation error:", error);
-        throw error;
-      }
-    },
-
     getTodaysMeals: async () => {
       const today = new Date().toISOString().split('T')[0];
       return api.meals.getMealsByDate(today);
@@ -189,7 +142,7 @@ export const api = {
       // Compress image before uploading
       const compressedImage = await ImageManipulator.manipulateAsync(
         imageUri,
-        [{ resize: { width: 828 } }],
+        [{ resize: { height: 800 } }],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
 
