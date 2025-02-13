@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { View, StyleSheet, Alert } from 'react-native'
 import { Text } from 'react-native-paper'
 import { Auth } from '@/components/Auth.native'
@@ -10,6 +10,8 @@ import { supabase } from '@/utils/supabase'
 import { createSelector } from '@reduxjs/toolkit'
 import { RootState } from '@/store'
 import { trackSignIn } from '@/utils/appsFlyerEvents'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { api } from '@/utils/api'
 
 interface SignInStepProps {
   onBack: () => void;
@@ -41,6 +43,20 @@ const selectUserData = createSelector(
 
 export default function SignInStep({ onBack, onNext }: SignInStepProps) {
   const userData = useAppSelector(selectUserData);
+  const [showPaywall, setShowPaywall] = React.useState(false);
+
+  useEffect(() => {
+    const loadFeatures = async () => {
+      try {
+        const features = await api.features.getFeatures();
+        setShowPaywall(features.paywall);
+      } catch (error) {
+        console.error('Error loading features:', error);
+        setShowPaywall(false);
+      }
+    };
+    loadFeatures();
+  }, []);
 
   const handleAuthSuccess = async (authUser: any) => {
     try {
@@ -62,7 +78,14 @@ export default function SignInStep({ onBack, onNext }: SignInStepProps) {
         throw new Error('Session lost after user creation')
       }
 
-      onNext();
+      if (showPaywall) {
+        // If paywall is enabled, proceed to paywall step
+        onNext();
+      } else {
+        // If paywall is disabled, complete onboarding and redirect
+        await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
+        router.replace('/(tabs)');
+      }
     } catch (error) {
       console.error('Error creating authenticated user:', error)
       Alert.alert('Error', 'Failed to create user profile')

@@ -73,6 +73,14 @@ export const api = {
     },
   },
 
+  features: {
+    getFeatures: async () => {
+      return fetchApi('/api/features', {
+        requireAuth: false
+      });
+    },
+  },
+
   meals: {
     analyzeMeal: async (image: string, mealId?: string) => {
       // If mealId is provided, use the dedicated re-analysis endpoint
