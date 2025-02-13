@@ -217,4 +217,22 @@ export const api = {
       });
     },
   },
+
+  notifications: {
+    saveToken: async (token: string) => {
+      const response = await fetch('/api/notifications/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save notification token');
+      }
+      
+      return response.json();
+    },
+  },
 };

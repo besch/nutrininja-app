@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { View, ScrollView, Alert, Platform, UIManager, Dimensions } from "react-native";
+import React, { useState } from "react";
+import { View, Alert, Dimensions } from "react-native";
 import { useTheme } from "@rneui/themed";
 import { useDispatch, useSelector } from "react-redux";
 import { Stack } from "expo-router";
@@ -20,7 +20,7 @@ import { GoalStep } from "./steps/GoalStep";
 import { TargetWeightStep } from "./steps/TargetWeightStep";
 import { TimelineStep } from "./steps/TimelineStep";
 import { DietStep } from "./steps/DietStep";
-// import { NotificationsStep } from "./steps/NotificationsStep";
+import { NotificationsStep } from "./steps/NotificationsStep";
 import CalorieTrackingStep from "./steps/CalorieTrackingStep";
 import NutritionAnalysisStep from "./steps/NutritionAnalysisStep";
 import TransformationStep from "./steps/TransformationStep";
@@ -51,7 +51,7 @@ const steps = [
   "targetWeight",
   "timeline",
   "diet",
-  // // "notifications",
+  "notifications",
   "complete",
   "loading",
   "success",
@@ -389,17 +389,17 @@ export function OnboardingScreen() {
             onNext={handleNext}
           />
         );
-      // case "notifications":
-      //   return (
-      //     <NotificationsStep
-      //       value={userData.notification_enabled}
-      //       onChange={(value) =>
-      //         handleUpdateForm("notification_enabled", value)
-      //       }
-      //       onBack={handleBack}
-      //       onNext={handleNext}
-      //     />
-      //   );
+      case "notifications":
+        return (
+          <NotificationsStep
+            value={userData.notification_enabled}
+            onChange={(value) =>
+              handleUpdateForm("notification_enabled", value)
+            }
+            onBack={handleBack}
+            onNext={handleNext}
+          />
+        );
       case "complete":
         return <CompleteStep onBack={handleBack} onNext={handleNext} />;
       case "loading":

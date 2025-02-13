@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import commonStyles from "../styles";
 import buttonStyles from "../buttonStyles";
+import { registerForPushNotificationsAsync } from "@/utils/notifications";
 
 interface NotificationsStepProps {
   value?: boolean;
@@ -18,6 +19,15 @@ export function NotificationsStep({
   onBack,
   onNext,
 }: NotificationsStepProps) {
+  const handleNotificationPermission = async (allow: boolean) => {
+    if (allow) {
+      const token = await registerForPushNotificationsAsync();
+      onChange(token !== null);
+    } else {
+      onChange(false);
+    }
+  };
+
   return (
     <SafeAreaView style={commonStyles.container}>
       <View style={{ flex: 1 }}>
@@ -61,13 +71,13 @@ export function NotificationsStep({
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.button, styles.denyButton]}
-                onPress={() => onChange(false)}
+                onPress={() => handleNotificationPermission(false)}
               >
                 <Text style={styles.denyButtonText}>Don't Allow</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.allowButton]}
-                onPress={() => onChange(true)}
+                onPress={() => handleNotificationPermission(true)}
               >
                 <Text style={styles.allowButtonText}>Allow</Text>
               </TouchableOpacity>
