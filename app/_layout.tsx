@@ -58,16 +58,11 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    const devKey = process.env.EXPO_PUBLIC_APPSFLYER_DEV_KEY;
-    if (!devKey) {
-      console.error('AppsFlyer Dev Key is not configured');
-      return;
-    }
 
     const appsFlyerConfig = {
-      devKey,
+      devKey: process.env.EXPO_PUBLIC_APPSFLYER_DEV_KEY as string,
       isDebug: true,
-      appId: "6740499813",
+      appId: process.env.EXPO_PUBLIC_APP_ID as string,
     };
 
     appsFlyer.initSdk(
