@@ -139,16 +139,9 @@ export const api = {
     },
 
     createMealWithoutAnalysis: async (imageUri: string, selectedDate?: string, timestamp?: string) => {
-      // Compress image before uploading
-      const compressedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { height: 800 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-      );
-
       const formData = new FormData();
       formData.append('image', {
-        uri: compressedImage.uri,
+        uri: imageUri,
         type: 'image/jpeg',
         name: 'meal.jpg',
       } as any);
