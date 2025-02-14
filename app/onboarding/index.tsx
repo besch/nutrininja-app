@@ -51,7 +51,7 @@ const steps = [
   "targetWeight",
   "timeline",
   "diet",
-  "notifications",
+  // "notifications",
   "complete",
   "loading",
   "success",
