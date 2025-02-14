@@ -69,6 +69,7 @@ function AppContent() {
       appsFlyerConfig,
       (result) => {
         console.log('AppsFlyer initialization successful:', result);
+        appsFlyer.startSdk();
       },
       (error) => {
         console.error('AppsFlyer initialization failed:', error);
