@@ -37,8 +37,9 @@ export function PaywallStep({ onBack, onNext }: PaywallStepProps) {
             console.error('onErrorHandler Paywall presentation error:', error);
             router.replace('/onboarding');
           },
-          onSkipHandler: () => {
+          onSkipHandler: async () => {
             console.log('onSkipHandler Paywall skipped by user');
+            await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
             router.replace('/(tabs)');
           },
           onPresentHandler: () => {
