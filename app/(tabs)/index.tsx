@@ -3,7 +3,6 @@ import { StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import moment, { Moment } from "moment";
 import { AddFoodOverlay } from "@/components/AddFoodOverlay";
-import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
 import { api } from "@/utils/api";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCameraPermissions } from "expo-camera";
@@ -22,7 +21,6 @@ import {
 
 export default function HomeScreen() {
   const [showMenu, setShowMenu] = useState(false);
-  const [showWeightOverlay, setShowWeightOverlay] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [minDate, setMinDate] = useState(moment().subtract(10, "days"));
   const [maxDate, setMaxDate] = useState(moment().add(10, "days"));
@@ -214,15 +212,6 @@ export default function HomeScreen() {
       </ScrollView>
 
       <AddFoodOverlay visible={showMenu} onClose={handleCloseMenu} />
-      <NumericInputOverlay
-        isVisible={showWeightOverlay}
-        onClose={() => setShowWeightOverlay(false)}
-        onSave={handleWeightCheckin}
-        title="Weight Check-in"
-        subtitle={selectedDate.format('MMM D, YYYY')}
-        initialValue={weightData?.weight ? (isMetric ? weightData.weight : weightData.weight * 2.20462) : 0}
-        unit={isMetric ? "kg" : "lbs"}
-      />
     </>
   );
 }
