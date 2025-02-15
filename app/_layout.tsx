@@ -19,6 +19,7 @@ import Purchases from 'react-native-purchases';
 import { Platform } from "react-native";
 import { supabase } from "@/utils/supabase";
 import appsFlyer from 'react-native-appsflyer';
+import { Settings } from 'react-native-fbsdk-next';
 // import * as Notifications from 'expo-notifications';
 // import { registerForPushNotificationsAsync } from '../utils/notifications';
 
@@ -50,6 +51,11 @@ function AppContent() {
   }, [dispatch, segments]);
 
   useEffect(() => {
+    // Initialize Facebook SDK
+    Settings.initializeSDK();
+    Settings.setAdvertiserTrackingEnabled(true);
+
+    // Initialize RevenueCat
     Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
     if (Platform.OS === 'ios') {
       Purchases.configure({ apiKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY as string });

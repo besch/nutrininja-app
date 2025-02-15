@@ -3,7 +3,7 @@
     "name": "Nutri Ninja",
     "displayName": "Nutri Ninja",
     "slug": "nutrininja",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "nutrininja",
@@ -15,16 +15,34 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.vino.nutrininja",
+      "bundleIdentifier": "$(EXPO_PUBLIC_BUNDLE_ID)",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "buildNumber": "3",
       "infoPlist": {
-        "NSCameraUsageDescription": "Nutri Ninja needs camera access to analyze your food and provide accurate nutritional information."
+        "NSCameraUsageDescription": "Nutri Ninja needs camera access to analyze your food and provide accurate nutritional information.",
+        "FacebookAppID": "$(EXPO_PUBLIC_FACEBOOK_APP_ID)",
+        "FacebookClientToken": "$(EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN)",
+        "FacebookDisplayName": "Nutri Ninja",
+        "LSApplicationQueriesSchemes": [
+          "fbapi",
+          "fb-messenger-api",
+          "fbauth2",
+          "fbshareextension"
+        ],
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and improve your experience.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          }
+        ]
       }
     },
     "android": {
-      "package": "com.vino.nutrininja",
+      "package": "$(EXPO_PUBLIC_BUNDLE_ID)",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -54,7 +72,19 @@
         "react-native-appsflyer",
         {
           "shouldUseStrictMode": true
-        } 
+        }
+      ],
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "$(EXPO_PUBLIC_FACEBOOK_APP_ID)",
+          "clientToken": "$(EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN)",
+          "displayName": "Nutri Ninja",
+          "advertiserIDCollectionEnabled": true,
+          "autoLogAppEventsEnabled": true,
+          "isAutoInitEnabled": true,
+          "iosUserTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
       ]
     ],
     "experiments": {

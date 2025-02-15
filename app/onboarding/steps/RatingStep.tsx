@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons as MCIcon } from "@expo/vector-icons";
@@ -54,9 +54,19 @@ const TestimonialCard = ({
 );
 
 export function RatingStep({ onBack, onNext }: RatingStepProps) {
+  const [isNextButtonDisabled, setIsNextButtonDisabled] = useState(true);
+
   useEffect(() => {
     if (Platform.OS === 'ios') {
       StoreReview.requestReview();
+      // Enable the button after 2 seconds to ensure the rating prompt is shown
+      const timer = setTimeout(() => {
+        setIsNextButtonDisabled(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setIsNextButtonDisabled(false);
     }
   }, []);
 
@@ -100,7 +110,14 @@ export function RatingStep({ onBack, onNext }: RatingStepProps) {
           </View>
         </View>
         <View style={buttonStyles.nextButtonContainer}>
-          <TouchableOpacity style={buttonStyles.nextButton} onPress={onNext}>
+          <TouchableOpacity 
+            style={[
+              buttonStyles.nextButton,
+              isNextButtonDisabled && { opacity: 0.5 }
+            ]} 
+            onPress={onNext}
+            disabled={isNextButtonDisabled}
+          >
             <Text style={buttonStyles.nextButtonText}>Next</Text>
           </TouchableOpacity>
         </View>
