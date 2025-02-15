@@ -15,14 +15,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "$(EXPO_PUBLIC_BUNDLE_ID)",
+      "bundleIdentifier": "com.vino.nutrininja",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "buildNumber": "3",
       "infoPlist": {
         "NSCameraUsageDescription": "Nutri Ninja needs camera access to analyze your food and provide accurate nutritional information.",
-        "FacebookAppID": "$(EXPO_PUBLIC_FACEBOOK_APP_ID)",
-        "FacebookClientToken": "$(EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN)",
+        "FacebookAppID": "609272158544660",
+        "FacebookClientToken": "31f6d1a233c625d2769f5f53b3be442c",
         "FacebookDisplayName": "Nutri Ninja",
         "LSApplicationQueriesSchemes": [
           "fbapi",
@@ -42,7 +42,7 @@
       }
     },
     "android": {
-      "package": "$(EXPO_PUBLIC_BUNDLE_ID)",
+      "package": "com.vino.nutrininja",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -77,8 +77,8 @@
       [
         "react-native-fbsdk-next",
         {
-          "appID": "$(EXPO_PUBLIC_FACEBOOK_APP_ID)",
-          "clientToken": "$(EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN)",
+          "appID": "609272158544660",
+          "clientToken": "31f6d1a233c625d2769f5f53b3be442c",
           "displayName": "Nutri Ninja",
           "advertiserIDCollectionEnabled": true,
           "autoLogAppEventsEnabled": true,
