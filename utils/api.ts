@@ -83,14 +83,12 @@ export const api = {
 
   meals: {
     analyzeMeal: async (image: string, mealId?: string) => {
-      // If mealId is provided, use the dedicated re-analysis endpoint
       if (mealId) {
         return fetchApi(`/api/meals/${mealId}/analyze`, {
           method: "POST"
         });
       }
 
-      // Otherwise proceed with new meal analysis
       const formData = new FormData();
       formData.append("image", {
         uri: image,
@@ -220,19 +218,10 @@ export const api = {
 
   notifications: {
     saveToken: async (token: string) => {
-      const response = await fetch('/api/notifications/token', {
+      return fetchApi('/api/notifications/token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ token }),
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save notification token');
-      }
-      
-      return response.json();
     },
   },
 };
