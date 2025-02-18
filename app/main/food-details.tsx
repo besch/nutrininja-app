@@ -15,7 +15,6 @@ import { AppDispatch } from "@/store";
 import { updateMealInStore } from "@/store/mealsSlice";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Meal } from "@/types";
-import * as Progress from "react-native-progress";
 import { Button } from "@/components/ui/Button";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';

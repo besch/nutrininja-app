@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import moment, { Moment } from "moment";
@@ -18,6 +18,7 @@ import {
   MacrosSummary,
   RecentMeals
 } from '@/components/home';
+import { checkAndRequestRating } from '@/utils/rating';
 
 export default function HomeScreen() {
   const [showMenu, setShowMenu] = useState(false);
@@ -42,7 +43,7 @@ export default function HomeScreen() {
       return data?.some(meal => meal.analysis_status === 'pending') ? 2000 : false;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 
   const { data: weightData } = useQuery({
@@ -175,6 +176,21 @@ export default function HomeScreen() {
       params: { id }
     });
   }, [router]);
+
+  // Add effect to check for completed analyses and trigger rating
+  useEffect(() => {
+    if (!mealsLoading && meals.length > 0) {
+      const hasCompletedAnalyses = meals.some((meal: Meal) => 
+        meal.analysis_status === 'completed' && 
+        meal.created_at && 
+        moment(meal.created_at).isAfter(moment().subtract(5, 'minutes'))
+      );
+
+      if (hasCompletedAnalyses) {
+        checkAndRequestRating();
+      }
+    }
+  }, [meals, mealsLoading]);
 
   return (
     <>

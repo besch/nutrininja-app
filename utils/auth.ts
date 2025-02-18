@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { store } from '@/store'
 import { clearUserData } from '@/store/userSlice'
+import { RATING_KEY, SUCCESSFUL_ANALYSES_KEY } from '@/utils/rating';
 
 export async function createAuthenticatedUser(userData: any, authUser: any) {
   try {
@@ -35,7 +36,11 @@ export async function signOut() {
     if (error) throw error
     
     store.dispatch(clearUserData())
-    await AsyncStorage.removeItem('hasCompletedOnboarding')
+    await Promise.all([
+      AsyncStorage.removeItem(RATING_KEY),
+      AsyncStorage.removeItem(SUCCESSFUL_ANALYSES_KEY),
+      AsyncStorage.removeItem('hasCompletedOnboarding')
+    ]);
     router.replace('/onboarding')
     return true
   } catch (error) {
