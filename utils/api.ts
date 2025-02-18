@@ -144,30 +144,67 @@ export const api = {
       return api.meals.getMealsByDate(today);
     },
 
-    createMealWithoutAnalysis: async (imageUri: string, selectedDate?: string, timestamp?: string) => {
+    async createMealWithoutAnalysis(imageUri: string, selectedDate?: string) {
       const formData = new FormData();
+      const filename = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
       formData.append('image', {
         uri: imageUri,
-        type: 'image/jpeg',
-        name: 'meal.jpg',
+        name: filename,
+        type,
       } as any);
-      if (selectedDate) formData.append('date', selectedDate);
-      if (timestamp) formData.append('timestamp', timestamp);
 
-      return fetchApi("/api/meals/save", {
-        method: "POST",
+      if (selectedDate) {
+        formData.append('date', selectedDate);
+      }
+
+      formData.append('skipAnalysis', 'true');
+
+      const response = await fetchApi('/meals/save', {
+        method: 'POST',
         body: formData,
-        headers: {
-          'Accept': 'application/json'
-        },
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to save meal');
+      }
+
+      const data = await response.json();
+      return { mealId: data.mealId };
+    },
+
+    async updateAnalysis(mealId: string, analysisResults: {
+      name: string;
+      calories: number;
+      proteins: number;
+      carbs: number;
+      fats: number;
+    }) {
+      const response = await fetchApi('/meals/update-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mealId,
+          analysisResults,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update meal analysis');
+      }
+
+      return response.json();
     },
 
     triggerAnalysis: async (mealId: string) => {
       return fetchApi(`/api/meals/${mealId}/analyze`, {
         method: "POST"
       });
-    }
+    },
   },
 
   weight: {

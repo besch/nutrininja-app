@@ -15,11 +15,11 @@ import { AppDispatch } from "@/store";
 import { updateMealInStore } from "@/store/mealsSlice";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Meal } from "@/types";
-import * as Progress from "react-native-progress";
 import { Button } from "@/components/ui/Button";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
+import { isDeviceCapable, initializeModel, analyzeImageLocally } from "@/utils/localImageAnalysis";
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
@@ -38,6 +38,7 @@ export default function FoodDetailsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const hasLoadedImageRef = useRef<{[key: string]: boolean}>({});
+  const [isLocalAnalysisAvailable, setIsLocalAnalysisAvailable] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
@@ -143,6 +144,18 @@ export default function FoodDetailsScreen() {
     return unsubscribe;
   }, [navigation, analyzeMealMutation.isPending]);
 
+  // Add useEffect to check device capability and initialize model
+  useEffect(() => {
+    async function checkAndInitializeLocalAnalysis() {
+      const capable = await isDeviceCapable();
+      if (capable) {
+        const modelInitialized = await initializeModel();
+        setIsLocalAnalysisAvailable(modelInitialized);
+      }
+    }
+    checkAndInitializeLocalAnalysis();
+  }, []);
+
   const handleEditMacro = (
     type: "calories" | "proteins" | "carbs" | "fats"
   ) => {
@@ -162,8 +175,41 @@ export default function FoodDetailsScreen() {
     setEditingMacro(null);
   };
 
-  const handleFixResults = () => {
+  const handleFixResults = async () => {
     if (!meal) return;
+
+    if (isLocalAnalysisAvailable) {
+      try {
+        // First try to get the image as base64
+        const response = await fetch(meal.image_url);
+        const blob = await response.blob();
+        
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+              const base64String = reader.result.split(',')[1];
+              resolve(base64String);
+            } else {
+              reject(new Error('Failed to convert image to base64'));
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        // Attempt local analysis
+        const localAnalysis = await analyzeImageLocally(base64Data);
+        setAnalysisResults(localAnalysis);
+        setShowAnalysisResults(true);
+        return;
+      } catch (error) {
+        console.error('Local analysis failed, falling back to server:', error);
+        // Fall back to server analysis
+      }
+    }
+
+    // If local analysis is not available or failed, use server analysis
     analyzeMealMutation.mutate(undefined, {
       onSuccess: (analysis) => {
         if (analysis) {

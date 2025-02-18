@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -9,7 +9,7 @@ import {
   Image,
   Linking,
 } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { Camera, CameraType } from "expo-camera";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -20,15 +20,28 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import { setMealAnalysisStatus } from '@/store/analysisSlice';
 import { trackMealAdded } from '@/utils/appsFlyerEvents';
+import { isDeviceCapable, initializeModel, analyzeImageLocally } from "@/utils/localImageAnalysis";
 
 export const CameraScreen = () => {
-  const [permission] = useCameraPermissions();
+  const [permission, requestPermission] = Camera.useCameraPermissions();
   const [processingPhoto, setProcessingPhoto] = useState<{ uri: string, timestamp?: Date } | null>(null);
-  const cameraRef = useRef<CameraView>(null);
+  const cameraRef = useRef<Camera>(null);
   const router = useRouter();
   const { selectedDate } = useLocalSearchParams<{ selectedDate?: string }>();
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
+  const [isLocalAnalysisAvailable, setIsLocalAnalysisAvailable] = useState(false);
+
+  useEffect(() => {
+    async function checkDeviceCapability() {
+      const capable = await isDeviceCapable();
+      if (capable) {
+        const modelInitialized = await initializeModel();
+        setIsLocalAnalysisAvailable(modelInitialized);
+      }
+    }
+    checkDeviceCapability();
+  }, []);
 
   const createMealMutation = useMutation({
     mutationFn: async (photo: { uri: string, timestamp?: Date }) => {
@@ -50,28 +63,80 @@ export const CameraScreen = () => {
         throw error;
       }
     },
-    onSuccess: (mealId) => {
+    onSuccess: async (mealId, photo) => {
       const dateToRefresh = selectedDate || moment().format('YYYY-MM-DD');
       queryClient.invalidateQueries({ queryKey: ['meals', dateToRefresh] });
-      setProcessingPhoto(null);
-      router.back();
 
       // Track successful meal addition
       trackMealAdded(true, 'camera');
 
-      // Start analysis in background
-      api.meals.triggerAnalysis(mealId).then(() => {
-        // Invalidate both meals and meals-summary queries after analysis is complete
-        const dateToRefresh = selectedDate || moment().format('YYYY-MM-DD');
-        queryClient.invalidateQueries({ queryKey: ['meals', dateToRefresh] });
-        queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
-      }).catch(error => {
-        dispatch(setMealAnalysisStatus({ 
-          mealId, 
-          status: 'failed',
-          error: error.message 
-        }));
-      });
+      let analysisResult;
+      
+      if (isLocalAnalysisAvailable) {
+        try {
+          // Get base64 data directly from the image
+          const base64Response = await fetch(photo.uri);
+          const blob = await base64Response.blob();
+          
+          // More efficient base64 conversion
+          const base64Data = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              if (typeof reader.result === 'string') {
+                // Extract only the base64 data part
+                const base64String = reader.result.split(',')[1];
+                resolve(base64String);
+              } else {
+                reject(new Error('Failed to convert image to base64'));
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+
+          // Attempt local analysis
+          analysisResult = await analyzeImageLocally(base64Data);
+          
+          console.log('Local analysis successful:', analysisResult);
+          
+          // Update meal with local analysis results
+          await api.meals.updateAnalysis(mealId, analysisResult);
+          dispatch(setMealAnalysisStatus({ 
+            mealId, 
+            status: 'completed' 
+          }));
+        } catch (error) {
+          console.error('Local analysis failed, falling back to server:', error);
+          // Fall back to server analysis
+          try {
+            await api.meals.triggerAnalysis(mealId);
+          } catch (serverError) {
+            console.error('Server analysis also failed:', serverError);
+            dispatch(setMealAnalysisStatus({ 
+              mealId, 
+              status: 'failed',
+              error: serverError instanceof Error ? serverError.message : 'Analysis failed' 
+            }));
+          }
+        }
+      } else {
+        // Fallback to server analysis
+        try {
+          await api.meals.triggerAnalysis(mealId);
+        } catch (error) {
+          dispatch(setMealAnalysisStatus({ 
+            mealId, 
+            status: 'failed',
+            error: error instanceof Error ? error.message : 'Analysis failed' 
+          }));
+        }
+      }
+
+      // Invalidate queries after analysis
+      queryClient.invalidateQueries({ queryKey: ['meals', dateToRefresh] });
+      queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
+      setProcessingPhoto(null);
+      router.back();
     },
     onError: (error) => {
       setProcessingPhoto(null);
@@ -177,10 +242,10 @@ export const CameraScreen = () => {
     <View style={styles.container}>
       {isLoading && <LoadingSpinner />}
       
-      <CameraView 
+      <Camera 
         ref={cameraRef} 
         style={styles.camera} 
-        facing="back"
+        type={CameraType.back}
       >
         <TouchableOpacity 
           style={[styles.closeButton, isLoading && styles.disabledButton]} 
@@ -239,7 +304,7 @@ export const CameraScreen = () => {
             </View>
           </>
         )}
-      </CameraView>
+      </Camera>
     </View>
   );
 };
