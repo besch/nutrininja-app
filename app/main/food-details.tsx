@@ -281,16 +281,11 @@ export default function FoodDetailsScreen() {
                 />
               ) : analysisFailed ? (
                 <View style={styles.errorContainer}>
-                  <View style={styles.errorHeader}>
-                    <View style={styles.errorBadge}>
-                      <Feather name="alert-circle" size={14} color="#FF6B6B" />
-                      <Text style={styles.errorBadgeText}>Analysis Failed</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.errorDescription}>
+                  <Feather name="alert-circle" size={16} color="#FF6B6B" />
+                  <Text style={styles.errorText}>
                     {meal.error_message === 'NO_FOOD_DETECTED' 
-                      ? "No food was detected in the image"
-                      : meal.error_message || "We couldn't analyze this meal"}
+                      ? "No food detected in image"
+                      : meal.error_message || "Analysis failed"}
                   </Text>
                 </View>
               ) : (
@@ -693,28 +688,19 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   errorContainer: {
-    backgroundColor: '#FFF5F5',
-    borderRadius: 12,
-    padding: 12,
-    width: '100%',
-  },
-  errorHeader: {
-    marginBottom: 8,
-  },
-  errorBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    gap: 6,
+    alignSelf: 'flex-start',
   },
-  errorBadgeText: {
-    fontSize: 15,
-    color: '#FF6B6B',
-    fontWeight: '600',
-  },
-  errorDescription: {
+  errorText: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 18,
+    color: '#FF6B6B',
+    fontWeight: '500',
   },
   retryButton: {
     flexDirection: 'row',
