@@ -22,6 +22,20 @@ import { useDispatch } from 'react-redux';
 import { setMealAnalysisStatus } from '@/store/analysisSlice';
 import { trackMealAdded } from '@/utils/appsFlyerEvents';
 
+const processImage = async (imageUri: string, selectedDate?: string) => {
+  // Normalize image orientation
+  const manipulatedPhoto = await ImageManipulator.manipulateAsync(
+    imageUri,
+    [{ rotate: 0 }], // This will automatically fix orientation based on EXIF
+    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+  );
+
+  const now = new Date();
+  const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
+  
+  return { ...manipulatedPhoto, timestamp };
+};
+
 export const CameraScreen = () => {
   const [permission] = useCameraPermissions();
   const [processingPhoto, setProcessingPhoto] = useState<{ uri: string, timestamp?: Date } | null>(null);
@@ -96,17 +110,7 @@ export const CameraScreen = () => {
       });
       
       if (photo) {
-        // Normalize image orientation
-        const manipulatedPhoto = await ImageManipulator.manipulateAsync(
-          photo.uri,
-          [{ rotate: 0 }], // This will automatically fix orientation based on EXIF
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-        );
-
-        const now = new Date();
-        const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
-        
-        const photoWithTimestamp = { ...manipulatedPhoto, timestamp };
+        const photoWithTimestamp = await processImage(photo.uri, selectedDate);
         setProcessingPhoto(photoWithTimestamp);
         createMealMutation.mutate(photoWithTimestamp);
       }
@@ -129,17 +133,7 @@ export const CameraScreen = () => {
         // Show loading state immediately
         setProcessingPhoto({ uri: result.assets[0].uri });
         
-        // Normalize image orientation for gallery images
-        const manipulatedPhoto = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ rotate: 0 }],
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-        );
-
-        const now = new Date();
-        const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
-
-        const photoWithTimestamp = { ...manipulatedPhoto, timestamp };
+        const photoWithTimestamp = await processImage(result.assets[0].uri, selectedDate);
         createMealMutation.mutate(photoWithTimestamp);
       }
     } catch (error) {
