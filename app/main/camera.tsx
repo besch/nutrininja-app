@@ -100,6 +100,7 @@ export const CameraScreen = () => {
         const manipulatedPhoto = await ImageManipulator.manipulateAsync(
           photo.uri,
           [{ rotate: 0 }], // This will automatically fix orientation based on EXIF
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
 
         const now = new Date();
@@ -120,16 +121,18 @@ export const CameraScreen = () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: "images",
-        quality: 0.7,
         base64: true,
         exif: true,
       });
 
       if (!result.canceled) {
+        // Show loading state immediately
+        setProcessingPhoto({ uri: result.assets[0].uri });
+        
         // Normalize image orientation for gallery images
         const manipulatedPhoto = await ImageManipulator.manipulateAsync(
           result.assets[0].uri,
-          [{ rotate: 0 }], // This will automatically fix orientation based on EXIF
+          [{ rotate: 0 }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
 
@@ -137,10 +140,10 @@ export const CameraScreen = () => {
         const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
 
         const photoWithTimestamp = { ...manipulatedPhoto, timestamp };
-        setProcessingPhoto(photoWithTimestamp);
         createMealMutation.mutate(photoWithTimestamp);
       }
     } catch (error) {
+      setProcessingPhoto(null);
       Alert.alert("Error", "Failed to pick image from gallery");
       trackMealAdded(false, 'gallery');
     }
