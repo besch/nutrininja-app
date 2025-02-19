@@ -2,10 +2,8 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import moment, { Moment } from "moment";
-import { AddFoodOverlay } from "@/components/AddFoodOverlay";
 import { api } from "@/utils/api";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCameraPermissions } from "expo-camera";
 import { useSelector, useDispatch } from "react-redux";
 import { selectIsMetric } from "@/store/userSlice";
 import { selectPendingMeals } from '@/store/analysisSlice';
@@ -21,7 +19,6 @@ import {
 import { checkAndRequestRating } from '@/utils/rating';
 
 export default function HomeScreen() {
-  const [showMenu, setShowMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [minDate, setMinDate] = useState(moment().subtract(10, "days"));
   const [maxDate, setMaxDate] = useState(moment().add(10, "days"));
@@ -29,7 +26,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const [permission, requestPermission] = useCameraPermissions();
   const pendingMeals = useSelector(selectPendingMeals);
   const selectedDate = useSelectedDate();
 
@@ -42,15 +38,15 @@ export default function HomeScreen() {
       const data = query.state.data as Meal[] | undefined;
       return data?.some(meal => meal.analysis_status === 'pending') ? 2000 : false;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const { data: weightData } = useQuery({
     queryKey: ['weight', dateStr],
     queryFn: () => api.weight.getByDate(dateStr),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000
   });
 
   const calculateDailyTotals = useCallback((mealsData: Meal[]) => {
@@ -71,7 +67,7 @@ export default function HomeScreen() {
 
   const dailyTotals = useMemo(() => calculateDailyTotals(meals), [meals, calculateDailyTotals]);
 
-  const { data: progressData, refetch: refetchProgress } = useQuery({
+  const { data: progressData } = useQuery({
     queryKey: ['progress', dateStr, dailyTotals],
     queryFn: async () => {
       const progressResponse = await api.user.getDailyProgress();
@@ -94,8 +90,8 @@ export default function HomeScreen() {
       };
     },
     enabled: !mealsLoading,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000
   });
 
   const summaryProps = useMemo(() => ({
@@ -140,21 +136,7 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const handleAddMeal = useCallback(async () => {
-    await requestPermission();
-
-    router.push({
-      pathname: "/main/camera",
-      params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
-    });
-  }, [router, selectedDate, permission, requestPermission]);
-
-  const handleCloseMenu = useCallback(() => {
-    setShowMenu(false);
-  }, []);
-
   const handleWeightCheckin = useCallback(async (weight: number) => {
-    // Convert from lbs to kg if using imperial
     const weightInKg = isMetric ? weight : weight / 2.20462;
     await api.weight.checkIn(Number(weightInKg.toFixed(1)), selectedDate.format('YYYY-MM-DD'));
     queryClient.invalidateQueries({ queryKey: ['weight', selectedDate.format('YYYY-MM-DD')] });
@@ -177,11 +159,8 @@ export default function HomeScreen() {
     });
   }, [router]);
 
-  // Add effect to check for completed analyses and trigger rating
   useEffect(() => {
     if (!mealsLoading && meals.length > 0) {
-      // Check if any meal has just been completed
-      // We'll trigger the rating check whenever we detect a completed analysis
       const hasCompletedAnalysis = meals.some((meal: Meal) => 
         meal.analysis_status === 'completed'
       );
@@ -193,42 +172,38 @@ export default function HomeScreen() {
   }, [meals, mealsLoading]);
 
   return (
-    <>
-      <ScrollView 
-        style={styles.container}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#000"
-          />
-        }
-      >
-        <Header />
-
-        <CalendarStrip
-          selectedDate={selectedDate}
-          onDateSelected={handleDateSelected}
-          minDate={minDate}
-          maxDate={maxDate}
-          onCalendarEndReached={handleCalendarEndReached}
-          dailyCalorieGoal={progressData?.goals?.dailyCalorieGoal}
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#000"
         />
+      }
+    >
+      <Header />
 
-        <CaloriesSummary {...summaryProps} />
+      <CalendarStrip
+        selectedDate={selectedDate}
+        onDateSelected={handleDateSelected}
+        minDate={minDate}
+        maxDate={maxDate}
+        onCalendarEndReached={handleCalendarEndReached}
+        dailyCalorieGoal={progressData?.goals?.dailyCalorieGoal}
+      />
 
-        <MacrosSummary {...macroProps} />
+      <CaloriesSummary {...summaryProps} />
 
-        <RecentMeals
-          meals={meals}
-          isLoading={mealsLoading}
-          pendingMeals={pendingMeals}
-          onMealPress={handleMealPress}
-        />
-      </ScrollView>
+      <MacrosSummary {...macroProps} />
 
-      <AddFoodOverlay visible={showMenu} onClose={handleCloseMenu} />
-    </>
+      <RecentMeals
+        meals={meals}
+        isLoading={mealsLoading}
+        pendingMeals={pendingMeals}
+        onMealPress={handleMealPress}
+      />
+    </ScrollView>
   );
 }
 

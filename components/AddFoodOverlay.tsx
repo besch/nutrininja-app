@@ -9,6 +9,7 @@ import {
 import { Text } from "@rneui/themed";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useCameraPermissions } from "expo-camera";
 import { overlayStyles, bottomSheetOverlayStyles } from "./overlays/styles";
 import OverlayHeader from "./overlays/OverlayHeader";
 import { useSelectedDate } from '@/store/userSlice';
@@ -44,10 +45,12 @@ const menuOptions = [
 export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
   const router = useRouter();
   const selectedDate = useSelectedDate();
+  const [permission, requestPermission] = useCameraPermissions();
 
-  const handleOptionPress = (optionId: string) => {
+  const handleOptionPress = async (optionId: string) => {
     onClose();
     if (optionId === "scan") {
+      await requestPermission();
       router.push({
         pathname: "/main/camera",
         params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
