@@ -13,6 +13,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from 'expo-image-manipulator';
 import { api } from "@/utils/api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import moment from "moment";
@@ -90,14 +91,21 @@ export const CameraScreen = () => {
 
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
         base64: true,
+        exif: true,
       });
+      
       if (photo) {
+        // Normalize image orientation
+        const manipulatedPhoto = await ImageManipulator.manipulateAsync(
+          photo.uri,
+          [{ rotate: 0 }], // This will automatically fix orientation based on EXIF
+        );
+
         const now = new Date();
         const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
         
-        const photoWithTimestamp = { ...photo, timestamp };
+        const photoWithTimestamp = { ...manipulatedPhoto, timestamp };
         setProcessingPhoto(photoWithTimestamp);
         createMealMutation.mutate(photoWithTimestamp);
       }
@@ -114,13 +122,21 @@ export const CameraScreen = () => {
         mediaTypes: "images",
         quality: 0.7,
         base64: true,
+        exif: true,
       });
 
       if (!result.canceled) {
+        // Normalize image orientation for gallery images
+        const manipulatedPhoto = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [{ rotate: 0 }], // This will automatically fix orientation based on EXIF
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
+
         const now = new Date();
         const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
 
-        const photoWithTimestamp = { ...result.assets[0], timestamp };
+        const photoWithTimestamp = { ...manipulatedPhoto, timestamp };
         setProcessingPhoto(photoWithTimestamp);
         createMealMutation.mutate(photoWithTimestamp);
       }
