@@ -47,7 +47,7 @@ const steps = [
   "heightWeight",
   "goal",
   "accomplishment",
-  "rating",
+  // "rating",
   "targetWeight",
   "timeline",
   "diet",

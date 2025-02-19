@@ -20,7 +20,7 @@ export const checkAndRequestRating = async () => {
     await AsyncStorage.setItem(SUCCESSFUL_ANALYSES_KEY, (count + 1).toString());
 
     // Show rating dialog after 3 successful analyses
-    if (count >= 2 && Platform.OS === 'ios') {
+    if (count >= 1 && Platform.OS === 'ios') {
       await StoreReview.requestReview();
       await AsyncStorage.setItem(RATING_KEY, 'true');
       return true;
