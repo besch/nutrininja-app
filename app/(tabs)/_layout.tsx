@@ -8,7 +8,7 @@ import { AddFoodOverlay } from "@/components/AddFoodOverlay";
 export default function TabLayout() {
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleAddMeal = () => setShowMenu(true);
+  const handleShowMenu = () => setShowMenu(true);
   const handleCloseMenu = () => setShowMenu(false);
 
   return (
@@ -66,7 +66,7 @@ export default function TabLayout() {
 
       <TouchableOpacity
         style={styles.addButtonContainer}
-        onPress={handleAddMeal}
+        onPress={handleShowMenu}
       >
         <View style={styles.addButton}>
           <Feather name="plus" size={24} color="#fff" />

@@ -1,16 +1,16 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
   Modal,
   Pressable,
   TouchableOpacity,
+  Animated,
 } from "react-native";
 import { Text } from "@rneui/themed";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCameraPermissions } from "expo-camera";
-import { bottomSheetOverlayStyles } from "./overlays/styles";
 import { useSelectedDate } from '@/store/userSlice';
 
 interface AddFoodOverlayProps {
@@ -45,36 +45,74 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
   const router = useRouter();
   const selectedDate = useSelectedDate();
   const [permission, requestPermission] = useCameraPermissions();
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    } else {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    }
+  }, [visible]);
 
   const handleOptionPress = async (optionId: string) => {
-    onClose();
-    if (optionId === "scan") {
-      await requestPermission();
-      router.push({
-        pathname: "/main/camera",
-        params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
-      });
-    } else if (optionId === "barcode") {
-      await requestPermission();
-      router.push({
-        pathname: "/main/camera",
-        params: { 
-          selectedDate: selectedDate.format('YYYY-MM-DD'),
-          mode: 'barcode'
-        }
-      });
-    }
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 11,
+    }).start(async () => {
+      onClose();
+      if (optionId === "scan") {
+        await requestPermission();
+        router.push({
+          pathname: "/main/camera",
+          params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
+        });
+      } else if (optionId === "barcode") {
+        await requestPermission();
+        router.push({
+          pathname: "/main/camera",
+          params: { 
+            selectedDate: selectedDate.format('YYYY-MM-DD'),
+            mode: 'barcode'
+          }
+        });
+      }
+    });
   };
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0],
+  });
 
   return (
     <Modal
       visible={visible}
-      transparent={true}
+      transparent
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={bottomSheetOverlayStyles.overlay} onPress={onClose}>
-        <View style={bottomSheetOverlayStyles.container}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Animated.View
+          style={[
+            styles.menuContainer,
+            {
+              transform: [{ translateY }],
+            },
+          ]}
+        >
           <View style={styles.menuGrid}>
             {menuOptions.map((option) => (
               <TouchableOpacity
@@ -87,13 +125,25 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
       </Pressable>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  menuContainer: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 24,
+    paddingBottom: 40,
+  },
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
