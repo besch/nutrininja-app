@@ -10,8 +10,7 @@ import { Text } from "@rneui/themed";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCameraPermissions } from "expo-camera";
-import { overlayStyles, bottomSheetOverlayStyles } from "./overlays/styles";
-import OverlayHeader from "./overlays/OverlayHeader";
+import { bottomSheetOverlayStyles } from "./overlays/styles";
 import { useSelectedDate } from '@/store/userSlice';
 
 interface AddFoodOverlayProps {
@@ -67,11 +66,6 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
     >
       <Pressable style={bottomSheetOverlayStyles.overlay} onPress={onClose}>
         <View style={bottomSheetOverlayStyles.container}>
-          <OverlayHeader 
-            title="Add Food"
-            onClose={onClose}
-          />
-
           <View style={styles.menuGrid}>
             {menuOptions.map((option) => (
               <TouchableOpacity
@@ -96,6 +90,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 16,
+    padding: 16,
   },
   menuItem: {
     width: "47%",
