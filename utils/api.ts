@@ -63,8 +63,8 @@ export const api = {
         }),
       });
     },
-    getDailyProgress: async (): Promise<DailyProgressResponse> => {
-      return fetchApi('/api/user/progress');
+    getDailyProgress: async (date: string): Promise<DailyProgressResponse> => {
+      return fetchApi(`/api/user/progress?date=${date}`);
     },
     deleteAccount: async () => {
       return fetchApi('/api/user/profile', {

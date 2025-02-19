@@ -70,7 +70,7 @@ export default function HomeScreen() {
   const { data: progressData } = useQuery({
     queryKey: ['progress', dateStr, dailyTotals],
     queryFn: async () => {
-      const progressResponse = await api.user.getDailyProgress();
+      const progressResponse = await api.user.getDailyProgress(dateStr);
       if (!progressResponse || !progressResponse.goals) {
         throw new Error('Invalid progress response');
       }
