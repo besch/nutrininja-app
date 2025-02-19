@@ -52,35 +52,39 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
       Animated.spring(slideAnim, {
         toValue: 1,
         useNativeDriver: true,
-        tension: 65,
-        friction: 11,
+        tension: 85,
+        friction: 9,
       }).start();
     } else {
       Animated.spring(slideAnim, {
         toValue: 0,
         useNativeDriver: true,
-        tension: 65,
-        friction: 11,
+        tension: 85,
+        friction: 9,
       }).start();
     }
   }, [visible]);
 
   const handleOptionPress = async (optionId: string) => {
-    Animated.spring(slideAnim, {
+    // Check permissions first if needed
+    if (optionId === "scan" || optionId === "barcode") {
+      await requestPermission();
+    }
+
+    // Quick and smooth closing animation
+    onClose();
+    Animated.timing(slideAnim, {
       toValue: 0,
+      duration: 200,
       useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start(async () => {
-      onClose();
+    }).start(() => {
+      // Navigate after animation completes
       if (optionId === "scan") {
-        await requestPermission();
         router.push({
           pathname: "/main/camera",
           params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
         });
       } else if (optionId === "barcode") {
-        await requestPermission();
         router.push({
           pathname: "/main/camera",
           params: { 
