@@ -167,7 +167,15 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <ErrorBoundary>
-            <AppContent />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: Platform.OS === "ios" ? "default" : "slide_from_right",
+                animationDuration: 200,
+              }}
+            >
+              <AppContent />
+            </Stack>
           </ErrorBoundary>
         </ThemeProvider>
       </QueryClientProvider>
