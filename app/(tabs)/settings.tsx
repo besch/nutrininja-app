@@ -157,7 +157,7 @@ export default function SettingsScreen() {
         <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
       </TouchableOpacity>
 
-      <Text style={styles.version}>VERSION 1.0.4</Text>
+      <Text style={styles.version}>VERSION 1.0.5</Text>
 
       <BaseOverlay
         isVisible={showDeleteConfirm}
