@@ -1,52 +1,91 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { ACTIVITY_CATEGORIES, ActivityType, calculateCaloriesBurned } from '@/types';
 import { api } from '@/utils/api';
 import { useUser } from '@/store/userSlice';
-import { Slider as AwesomeSlider } from 'react-native-awesome-slider';
-import { useSharedValue } from 'react-native-reanimated';
+import { useDispatch } from 'react-redux';
+import { fetchUserData } from '@/store/userSlice';
+import { AppDispatch } from '@/store';
 import ActivityIcon from '@/components/ActivityIcon';
+import * as Haptics from 'expo-haptics';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
   const { activityId, selectedDate } = useLocalSearchParams<{ activityId: string; selectedDate: string }>();
-  const [duration, setDuration] = useState(30);
+  const [duration, setDuration] = useState('30');
+  const [calories, setCalories] = useState('0');
   const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
 
-  // Reanimated shared values
-  const progress = useSharedValue(30);
-  const min = useSharedValue(5);
-  const max = useSharedValue(180);
+  // Fetch user data when component mounts
+  useEffect(() => {
+    dispatch(fetchUserData());
+  }, [dispatch]);
 
   const activity = ACTIVITY_CATEGORIES.reduce((found: ActivityType | null, category) => {
     if (found) return found;
     return category.activities.find(a => a.id === activityId) || null;
   }, null);
 
-  const caloriesBurned = activity ? calculateCaloriesBurned(user?.weight || 70, duration, activity.met) : 0;
+  const calculateAndSetCalories = (durationValue: number) => {
+    if (activity && user?.weight) {
+      const calculated = calculateCaloriesBurned(user.weight, durationValue, activity.met);
+      setCalories(calculated.toString());
+    }
+  };
+
+  const handleDurationChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setDuration(numericValue);
+    calculateAndSetCalories(Number(numericValue) || 0);
+  };
+
+  const handleCaloriesChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setCalories(numericValue);
+  };
 
   const handleSave = async () => {
     if (!activity || !user) return;
-
+    
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsLoading(true);
     try {
       await api.activities.logActivity({
         activity_type: activity.id,
-        calories_burned: caloriesBurned,
-        duration_minutes: duration,
+        calories_burned: Number(calories),
+        duration_minutes: Number(duration),
         activity_date: selectedDate,
       });
-      router.back();
+
+      // Invalidate relevant queries to refresh the data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['progress'] }),
+        queryClient.invalidateQueries({ queryKey: ['meals-summary'] })
+      ]);
+
+      // Navigate to home screen
+      router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to log activity:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Calculate initial calories whenever user data or activity changes
+  useEffect(() => {
+    if (user?.weight && activity) {
+      calculateAndSetCalories(Number(duration));
+    }
+  }, [user?.weight, activity]);
 
   if (!activity) {
     return (
@@ -56,56 +95,70 @@ export default function ActivityDetailsScreen() {
     );
   }
 
+  const isValid = Number(duration) > 0 && Number(calories) > 0;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.title}>{activity.name}</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <ActivityIcon name={activity.icon} size={48} color="#333" />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Feather name="arrow-left" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={styles.title}>{activity.name}</Text>
         </View>
 
-        <View style={styles.durationContainer}>
-          <Text style={styles.sectionTitle}>Duration</Text>
-          <Text style={styles.durationValue}>{duration} minutes</Text>
-          <View style={styles.sliderContainer}>
-            <AwesomeSlider
-              progress={progress}
-              minimumValue={min}
-              maximumValue={max}
-              onValueChange={(value: number) => {
-                setDuration(Math.round(value));
-              }}
-              theme={{
-                minimumTrackTintColor: '#000',
-                maximumTrackTintColor: '#eee',
-                bubbleBackgroundColor: '#000',
-                bubbleTextColor: '#fff',
-                cacheTrackTintColor: '#000'
-              }}
-              renderBubble={() => null}
-            />
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <ActivityIcon name={activity.icon} size={48} color="#333" />
           </View>
-        </View>
 
-        <View style={styles.caloriesContainer}>
-          <Text style={styles.sectionTitle}>Estimated Calories</Text>
-          <Text style={styles.caloriesValue}>{caloriesBurned} kcal</Text>
-        </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.sectionTitle}>Duration</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={duration}
+                onChangeText={handleDurationChange}
+                keyboardType="number-pad"
+                maxLength={3}
+                placeholder="0"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+              />
+              <Text style={styles.inputUnit}>min</Text>
+            </View>
+          </View>
 
-        <Button
-          title="Save Activity"
-          onPress={handleSave}
-          loading={isLoading}
-          buttonStyle={styles.saveButton}
-        />
-      </View>
-    </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.sectionTitle}>Calories Burned</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={calories}
+                onChangeText={handleCaloriesChange}
+                keyboardType="number-pad"
+                maxLength={4}
+                placeholder="0"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+              />
+              <Text style={styles.inputUnit}>kcal</Text>
+            </View>
+          </View>
+
+          <Button
+            title="Save Activity"
+            onPress={handleSave}
+            loading={isLoading}
+            buttonStyle={[styles.saveButton, !isValid && styles.saveButtonDisabled]}
+            disabled={!isValid || isLoading}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -142,33 +195,43 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 32,
   },
-  durationContainer: {
-    marginBottom: 32,
+  inputContainer: {
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
+    color: '#333',
   },
-  durationValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
   },
-  sliderContainer: {
-    height: 40,
-    marginHorizontal: -8,
+  input: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
+    padding: 0,
   },
-  caloriesContainer: {
-    marginBottom: 32,
-  },
-  caloriesValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  inputUnit: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 8,
   },
   saveButton: {
     backgroundColor: '#000',
     borderRadius: 12,
-    height: 48,
+    height: 56,
+    marginTop: 'auto',
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#ccc',
   },
 }); 
