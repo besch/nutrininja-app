@@ -7,6 +7,7 @@ interface MacroProgressProps {
   current: number;
   target: number;
   color: string;
+  burnedCalories?: number;
 }
 
 const MacroItem: React.FC<MacroProgressProps> = ({
@@ -14,15 +15,20 @@ const MacroItem: React.FC<MacroProgressProps> = ({
   current,
   target,
   color,
+  burnedCalories = 0,
 }) => {
-  const percentage = Math.min((current / target) * 100, 100);
+  const netCurrent = Math.max(0, current - burnedCalories);
+  const percentage = Math.min((netCurrent / target) * 100, 100);
 
   return (
     <View style={styles.macroContainer}>
       <View style={styles.labelContainer}>
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.value}>
-          {current}/{target}g
+          {netCurrent}/{target}g
+          {burnedCalories > 0 && (
+            <Text style={styles.burnedText}> (-{burnedCalories})</Text>
+          )}
         </Text>
       </View>
       <View style={styles.progressBackground}>
@@ -41,7 +47,18 @@ export const MacroProgress: React.FC<{
   proteins: { current: number; target: number };
   carbs: { current: number; target: number };
   fats: { current: number; target: number };
-}> = ({ proteins, carbs, fats }) => {
+  burnedCalories?: number;
+}> = ({ proteins, carbs, fats, burnedCalories = 0 }) => {
+  // Distribute burned calories proportionally among macros
+  const totalMacros = proteins.current + carbs.current + fats.current;
+  const proteinRatio = proteins.current / totalMacros;
+  const carbsRatio = carbs.current / totalMacros;
+  const fatsRatio = fats.current / totalMacros;
+
+  const burnedProteins = Math.round(burnedCalories * proteinRatio * 0.25); // 1g protein = 4 calories
+  const burnedCarbs = Math.round(burnedCalories * carbsRatio * 0.25); // 1g carbs = 4 calories
+  const burnedFats = Math.round(burnedCalories * fatsRatio * 0.11); // 1g fat = 9 calories
+
   return (
     <View style={styles.container}>
       <MacroItem
@@ -49,18 +66,21 @@ export const MacroProgress: React.FC<{
         current={proteins.current}
         target={proteins.target}
         color={colors.primary}
+        burnedCalories={burnedProteins}
       />
       <MacroItem
         label="Carbs"
         current={carbs.current}
         target={carbs.target}
         color={colors.secondary}
+        burnedCalories={burnedCarbs}
       />
       <MacroItem
         label="Fats"
         current={fats.current}
         target={fats.target}
         color={colors.warning}
+        burnedCalories={burnedFats}
       />
     </View>
   );
@@ -89,6 +109,10 @@ const styles = StyleSheet.create({
   value: {
     fontSize: typography.sizes.sm,
     color: colors.text,
+  },
+  burnedText: {
+    fontSize: typography.sizes.sm,
+    color: colors.secondary,
   },
   progressBackground: {
     height: 8,

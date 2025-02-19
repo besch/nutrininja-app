@@ -3,6 +3,7 @@ import { RootState } from "./index";
 import { api } from "@/utils/api";
 import moment, { Moment } from "moment";
 import { useSelector } from "react-redux";
+import type { User } from "@/types";
 
 interface Macro {
   value: number;
@@ -34,7 +35,7 @@ interface WorkoutPlan {
   version: string;
 }
 
-interface UserState {
+interface UserState extends Partial<User> {
   id?: string;
   email?: string;
   created_at?: string;
@@ -60,7 +61,7 @@ interface UserState {
   error: string | null;
   is_anonymous?: boolean;
   pace?: number;
-  is_metric?: boolean;
+  is_metric: boolean;
   selectedDate: string; // ISO date string YYYY-MM-DD
 }
 
@@ -126,7 +127,13 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     setUserData: (state, action: PayloadAction<Partial<UserState>>) => {
-      return { ...state, ...action.payload, isLoading: false, error: null };
+      const payload = { ...action.payload };
+      (Object.keys(payload) as Array<keyof UserState>).forEach(key => {
+        if (payload[key] === null) {
+          delete payload[key];
+        }
+      });
+      return { ...state, ...payload, isLoading: false, error: null } as UserState;
     },
     setOnboardingData: (state, action: PayloadAction<Partial<UserState>>) => {
       return { ...state, ...action.payload };
@@ -172,3 +179,5 @@ export const useSelectedDate = (): Moment => {
   const selectedDate = useSelector((state: RootState) => state.user.selectedDate);
   return moment(selectedDate);
 };
+
+export const useUser = () => useSelector(selectUser);

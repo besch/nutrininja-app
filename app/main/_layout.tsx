@@ -35,6 +35,20 @@ export default function MainLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="activity-selection"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="activity-details"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

@@ -8,6 +8,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 interface MacroData {
   remaining: number;
   total: number;
+  burned?: number;
 }
 
 interface MacrosSummaryProps {
@@ -23,16 +24,18 @@ const MacroCard: React.FC<{
   icon: string;
   color: string;
   total: number;
+  burned?: number;
   isNegative: boolean;
-}> = ({ value, label, icon, color, total, isNegative }) => {
-  // Calculate the goal value (total + remaining when not over)
-  const goalValue = isNegative ? total : (total + value);
+}> = ({ value, label, icon, color, total, burned = 0, isNegative }) => {
+  // Calculate the net value (total + remaining when not over)
+  const netValue = value - burned;
+  const goalValue = isNegative ? total : (total + netValue);
 
   return (
     <View style={styles.macroCard}>
       <View style={styles.macroCardContent}>
         <Text style={[styles.macroValue, isNegative && styles.negativeValue]}>
-          {Math.abs(value)}g
+          {Math.abs(netValue)}g
         </Text>
         <Text 
           style={[styles.macroLabel, isNegative && styles.negativeValue]}
@@ -41,11 +44,14 @@ const MacroCard: React.FC<{
         >
           {isNegative ? `${label} over` : `${label} left`}
         </Text>
+        {burned > 0 && (
+          <Text style={styles.burnedValue}>-{burned}g burned</Text>
+        )}
         <View style={styles.macroProgress}>
           {isNegative ? (
             <Progress.Circle
               size={60}
-              progress={Math.min(1, total ? Math.abs(value) / total : 0)}
+              progress={Math.min(1, total ? Math.abs(netValue) / total : 0)}
               thickness={7}
               color="#FF6B6B"
               unfilledColor="#eee"
@@ -109,6 +115,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
         icon="flash-outline"
         color="#FF3B30"
         total={proteins.total}
+        burned={proteins.burned}
         isNegative={proteins.remaining < 0}
       />
       <MacroCard
@@ -117,6 +124,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
         icon="leaf-outline"
         color="#FF9500"
         total={carbs.total}
+        burned={carbs.burned}
         isNegative={carbs.remaining < 0}
       />
       <MacroCard
@@ -125,6 +133,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
         icon="water-outline"
         color="#007AFF"
         total={fats.total}
+        burned={fats.burned}
         isNegative={fats.remaining < 0}
       />
     </View>
@@ -169,6 +178,11 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 12,
     width: '100%',
+  },
+  burnedValue: {
+    fontSize: 12,
+    color: "#4CAF50",
+    marginBottom: 8,
   },
   macroProgress: {
     alignItems: "center",

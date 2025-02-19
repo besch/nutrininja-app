@@ -11,7 +11,9 @@ config.resolver.alias = {
   "@": path.resolve(__dirname, "./"),
 };
 
-// Add source extensions
-config.resolver.sourceExts = [...config.resolver.sourceExts, "mjs", "cjs"];
+// Add SVG support
+config.transformer.babelTransformerPath = require.resolve("react-native-svg-transformer");
+config.resolver.assetExts = config.resolver.assetExts.filter((ext) => ext !== "svg");
+config.resolver.sourceExts = [...config.resolver.sourceExts, "svg", "mjs", "cjs"];
 
 module.exports = config;

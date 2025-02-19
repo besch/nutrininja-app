@@ -75,19 +75,7 @@ export default function HomeScreen() {
         throw new Error('Invalid progress response');
       }
 
-      return {
-        ...progressResponse,
-        progress: {
-          remainingCalories: (progressResponse.goals.dailyCalorieGoal || 0) - dailyTotals.calories,
-          remainingProteins: (progressResponse.goals.proteinGoal || 0) - dailyTotals.proteins,
-          remainingCarbs: (progressResponse.goals.carbsGoal || 0) - dailyTotals.carbs,
-          remainingFats: (progressResponse.goals.fatsGoal || 0) - dailyTotals.fats,
-          totalCalories: dailyTotals.calories,
-          totalProteins: dailyTotals.proteins,
-          totalCarbs: dailyTotals.carbs,
-          totalFats: dailyTotals.fats,
-        }
-      };
+      return progressResponse;
     },
     enabled: !mealsLoading,
     staleTime: 5 * 60 * 1000,
@@ -97,31 +85,43 @@ export default function HomeScreen() {
   const summaryProps = useMemo(() => ({
     isLoading: mealsLoading,
     remainingCalories: progressData?.progress?.remainingCalories,
-    totalCalories: progressData?.progress?.totalCalories
-  }), [mealsLoading, progressData?.progress?.remainingCalories, progressData?.progress?.totalCalories]);
+    totalCalories: progressData?.progress?.totalCalories,
+    burnedCalories: progressData?.progress?.burnedCalories,
+  }), [
+    mealsLoading,
+    progressData?.progress?.remainingCalories,
+    progressData?.progress?.totalCalories,
+    progressData?.progress?.burnedCalories,
+  ]);
 
   const macroProps = useMemo(() => ({
     isLoading: mealsLoading,
     proteins: {
       remaining: progressData?.progress?.remainingProteins || 0,
-      total: progressData?.progress?.totalProteins || 0
+      total: progressData?.progress?.totalProteins || 0,
+      burned: progressData?.progress?.burnedProteins || 0,
     },
     carbs: {
       remaining: progressData?.progress?.remainingCarbs || 0,
-      total: progressData?.progress?.totalCarbs || 0
+      total: progressData?.progress?.totalCarbs || 0,
+      burned: progressData?.progress?.burnedCarbs || 0,
     },
     fats: {
       remaining: progressData?.progress?.remainingFats || 0,
-      total: progressData?.progress?.totalFats || 0
+      total: progressData?.progress?.totalFats || 0,
+      burned: progressData?.progress?.burnedFats || 0,
     }
   }), [
     mealsLoading,
     progressData?.progress?.remainingProteins,
     progressData?.progress?.totalProteins,
+    progressData?.progress?.burnedProteins,
     progressData?.progress?.remainingCarbs,
     progressData?.progress?.totalCarbs,
+    progressData?.progress?.burnedCarbs,
     progressData?.progress?.remainingFats,
-    progressData?.progress?.totalFats
+    progressData?.progress?.totalFats,
+    progressData?.progress?.burnedFats,
   ]);
 
   const handleDateSelected = useCallback((date: Moment) => {

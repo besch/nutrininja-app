@@ -20,6 +20,7 @@ import { Platform } from "react-native";
 import { supabase } from "@/utils/supabase";
 import appsFlyer from 'react-native-appsflyer';
 import { Settings } from 'react-native-fbsdk-next';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // import * as Notifications from 'expo-notifications';
 // import { registerForPushNotificationsAsync } from '../utils/notifications';
 
@@ -163,22 +164,24 @@ export default function RootLayout() {
   // }, []);
 
   return (
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <ErrorBoundary>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: Platform.OS === "ios" ? "default" : "slide_from_right",
-                animationDuration: 200,
-              }}
-            >
-              <AppContent />
-            </Stack>
-          </ErrorBoundary>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider theme={theme}>
+            <ErrorBoundary>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: Platform.OS === "ios" ? "default" : "slide_from_right",
+                  animationDuration: 200,
+                }}
+              >
+                <AppContent />
+              </Stack>
+            </ErrorBoundary>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </Provider>
+    </GestureHandlerRootView>
   );
 }

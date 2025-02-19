@@ -92,6 +92,11 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
             mode: 'barcode'
           }
         });
+      } else if (optionId === "exercise") {
+        router.push({
+          pathname: "/main/activity-selection",
+          params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
+        });
       }
     });
   };
