@@ -30,9 +30,9 @@ const menuOptions = [
     icon: <Feather name="bookmark" size={24} color="#000" />,
   },
   {
-    id: "describe",
-    title: "Describe food",
-    icon: <Feather name="edit-2" size={24} color="#000" />,
+    id: "barcode",
+    title: "Scan barcode",
+    icon: <Feather name="maximize" size={24} color="#000" />,
   },
   {
     id: "scan",
@@ -53,6 +53,15 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
       router.push({
         pathname: "/main/camera",
         params: { selectedDate: selectedDate.format('YYYY-MM-DD') }
+      });
+    } else if (optionId === "barcode") {
+      await requestPermission();
+      router.push({
+        pathname: "/main/camera",
+        params: { 
+          selectedDate: selectedDate.format('YYYY-MM-DD'),
+          mode: 'barcode'
+        }
       });
     }
   };

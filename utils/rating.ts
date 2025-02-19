@@ -6,8 +6,8 @@ export const RATING_KEY = '@nutrininja:has_rated';
 export const SUCCESSFUL_ANALYSES_KEY = '@nutrininja:successful_analyses_count';
 
 const shouldShowAtCount = (count: number): boolean => {
-  if (count === 1 || count === 5 || count === 10) return true;
-  return count >= 10 && count % 10 === 0;
+  if (count === 1 || count === 5 || count === 15) return true;
+  return false;
 };
 
 export const checkAndRequestRating = async () => {
