@@ -180,13 +180,13 @@ export default function HomeScreen() {
   // Add effect to check for completed analyses and trigger rating
   useEffect(() => {
     if (!mealsLoading && meals.length > 0) {
-      const hasCompletedAnalyses = meals.some((meal: Meal) => 
-        meal.analysis_status === 'completed' && 
-        meal.created_at && 
-        moment(meal.created_at).isAfter(moment().subtract(5, 'minutes'))
+      // Check if any meal has just been completed
+      // We'll trigger the rating check whenever we detect a completed analysis
+      const hasCompletedAnalysis = meals.some((meal: Meal) => 
+        meal.analysis_status === 'completed'
       );
 
-      if (hasCompletedAnalyses) {
+      if (hasCompletedAnalysis) {
         checkAndRequestRating();
       }
     }

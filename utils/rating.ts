@@ -5,6 +5,11 @@ import { Platform } from 'react-native';
 export const RATING_KEY = '@nutrininja:has_rated';
 export const SUCCESSFUL_ANALYSES_KEY = '@nutrininja:successful_analyses_count';
 
+const shouldShowAtCount = (count: number): boolean => {
+  if (count === 1 || count === 5 || count === 10) return true;
+  return count >= 10 && count % 10 === 0;
+};
+
 export const checkAndRequestRating = async () => {
   try {
     const hasRated = await AsyncStorage.getItem(RATING_KEY);
@@ -15,12 +20,13 @@ export const checkAndRequestRating = async () => {
     // Get successful analyses count
     const analysesCount = await AsyncStorage.getItem(SUCCESSFUL_ANALYSES_KEY);
     const count = analysesCount ? parseInt(analysesCount) : 0;
+    const newCount = count + 1;
     
-    // Increment count
-    await AsyncStorage.setItem(SUCCESSFUL_ANALYSES_KEY, (count + 1).toString());
+    // Update count
+    await AsyncStorage.setItem(SUCCESSFUL_ANALYSES_KEY, newCount.toString());
 
-    // Show rating dialog after 3 successful analyses
-    if (count >= 1 && Platform.OS === 'ios') {
+    // Show rating dialog at specific milestones
+    if (shouldShowAtCount(newCount) && Platform.OS === 'ios') {
       await StoreReview.requestReview();
       await AsyncStorage.setItem(RATING_KEY, 'true');
       return true;
