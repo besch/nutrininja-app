@@ -214,6 +214,12 @@ export const api = {
         body: JSON.stringify(data),
       });
     },
+
+    deleteActivity: async (id: string) => {
+      return fetchApi(`/api/activities/${id}`, {
+        method: 'DELETE',
+      });
+    },
   },
 
   notifications: {

@@ -49,6 +49,13 @@ export default function MainLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="calories-details"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

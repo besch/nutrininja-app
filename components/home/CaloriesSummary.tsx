@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Feather } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useRouter } from 'expo-router';
 
 interface CaloriesSummaryProps {
   isLoading: boolean;
@@ -18,6 +19,8 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   totalCalories = 0,
   burnedCalories = 0,
 }) => {
+  const router = useRouter();
+
   if (isLoading) {
     return (
       <View style={styles.mainCard}>
@@ -34,7 +37,11 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   const isOver = finalCalories > totalCalories;
 
   return (
-    <View style={styles.mainCard}>
+    <TouchableOpacity 
+      style={styles.mainCard}
+      onPress={() => router.push('/main/calories-details')}
+      activeOpacity={0.7}
+    >
       <View style={styles.mainCardContent}>
         <View style={styles.caloriesContainer}>
           <Text style={[
@@ -84,7 +91,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
