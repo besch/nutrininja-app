@@ -31,6 +31,7 @@ const selectUserData = createSelector(
     has_previous_experience: user.has_previous_experience,
     accomplishment: user.accomplishment,
     diet: user.diet,
+    pace: user.pace,
     notification_enabled: user.notification_enabled,
     weekly_weight_goal: user.weekly_weight_goal,
     daily_calorie_goal: user.daily_calorie_goal,
