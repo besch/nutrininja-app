@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
 import GenderSelectOverlay from "@/components/overlays/GenderSelectOverlay";
 import DatePickerOverlay from "@/components/overlays/DatePickerOverlay";
+import PaceAdjustmentOverlay from "@/components/overlays/PaceAdjustmentOverlay";
 import { setUserData, selectUser, selectIsMetric, selectIsLoading, setUnitPreference, fetchUserData } from "@/store/userSlice";
 import { api } from "@/utils/api";
 import { AppDispatch } from "@/store";
@@ -21,6 +22,7 @@ type EditField =
   | "height"
   | "birth_date"
   | "gender"
+  | "pace"
   | null;
 
 export default function PersonalDetailsScreen() {
@@ -45,6 +47,7 @@ export default function PersonalDetailsScreen() {
   const [gender, setGender] = useState<"male" | "female" | "other">(
     (user?.gender as "male" | "female" | "other") || "other"
   );
+  const [pace, setPace] = useState<number | null>(user?.pace ?? null);
 
   // Update local state when user data changes
   React.useEffect(() => {
@@ -54,6 +57,7 @@ export default function PersonalDetailsScreen() {
       setHeight(user.height ?? null);
       setBirthDate(user.birth_date || new Date().toISOString());
       setGender((user.gender as "male" | "female" | "other") || "other");
+      setPace(user.pace ?? null);
     }
   }, [user]);
 
@@ -186,6 +190,16 @@ export default function PersonalDetailsScreen() {
     }
   };
 
+  const handlePaceChange = async (value: number) => {
+    setIsUpdating(true);
+    try {
+      setPace(value);
+      await updateProfileMutation.mutateAsync({ pace: value });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (isLoading || isUpdating) {
     return (
       <SafeAreaView style={styles.container}>
@@ -290,6 +304,26 @@ export default function PersonalDetailsScreen() {
 
           <View style={styles.separator} />
 
+          <TouchableOpacity
+            style={styles.detailRow}
+            onPress={() => setEditField("pace")}
+          >
+            <Text style={styles.detailLabel}>Weight change pace</Text>
+            <View style={styles.detailValueContainer}>
+              <Text style={styles.detailValue}>
+                {pace ? `${isMetric ? pace.toFixed(1) : (pace * 2.20462).toFixed(1)} ${isMetric ? 'kg' : 'lbs'}/week` : '-'}
+              </Text>
+              <Ionicons
+                name="pencil"
+                size={20}
+                color="#8E8E93"
+                style={styles.editIcon}
+              />
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.separator} />
+
           {/* Unit System Switch */}
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Unit System</Text>
@@ -350,6 +384,14 @@ export default function PersonalDetailsScreen() {
         onClose={() => setEditField(null)}
         onSave={handleGenderChange}
         initialValue={gender}
+      />
+
+      <PaceAdjustmentOverlay
+        isVisible={editField === "pace"}
+        onClose={() => setEditField(null)}
+        onSave={handlePaceChange}
+        initialValue={pace || 0.09}
+        goal={user?.goal || "maintain"}
       />
     </SafeAreaView>
   );
