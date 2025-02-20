@@ -142,10 +142,32 @@ export const RecentMeals: React.FC<RecentMealsProps> = ({
     return (
       <View style={styles.recentSection}>
         <Text style={styles.sectionTitle}>Recently eaten</Text>
-        <View style={styles.recentEmptyContent}>
-          <View style={styles.loadingContainer}>
-            <LoadingSpinner />
-          </View>
+        <View style={styles.recentContent}>
+          {Array(3).fill(0).map((_, index) => (
+            <View key={index} style={styles.foodItem}>
+              <View style={styles.foodItemContent}>
+                <ShimmerPlaceholder style={styles.shimmerImage} width={100} height={100} />
+                <View style={styles.foodDetails}>
+                  <View style={styles.foodHeaderRow}>
+                    <ShimmerPlaceholder style={styles.shimmerName} width={150} height={20} />
+                    <View style={styles.timeContainer}>
+                      <ShimmerPlaceholder style={styles.shimmerTime} width={70} height={20} />
+                    </View>
+                  </View>
+                  <View style={styles.macroRows}>
+                    <View style={styles.calorieRow}>
+                      <ShimmerPlaceholder style={styles.shimmerMacro} width={100} height={16} />
+                    </View>
+                    <View style={styles.macroRow}>
+                      <ShimmerPlaceholder style={styles.shimmerMacro} width={60} height={16} />
+                      <ShimmerPlaceholder style={styles.shimmerMacro} width={60} height={16} />
+                      <ShimmerPlaceholder style={styles.shimmerMacro} width={60} height={16} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
         </View>
       </View>
     );
@@ -293,8 +315,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     zIndex: 1,
   },
+  shimmerImage: {
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+  },
   shimmerName: {
     borderRadius: 4,
+    marginRight: 8,
+  },
+  shimmerTime: {
+    borderRadius: 12,
   },
   shimmerMacro: {
     borderRadius: 4,

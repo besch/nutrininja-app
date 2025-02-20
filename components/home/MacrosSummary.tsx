@@ -3,7 +3,10 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 interface MacroData {
   remaining: number;
@@ -16,6 +19,18 @@ interface MacrosSummaryProps {
   carbs?: MacroData;
   fats?: MacroData;
 }
+
+const LoadingMacroCard: React.FC = () => (
+  <View style={styles.macroCard}>
+    <View style={styles.macroCardContent}>
+      <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
+      <ShimmerPlaceholder style={styles.shimmerLabel} width={60} height={18} />
+      <View style={styles.macroProgress}>
+        <ShimmerPlaceholder style={styles.shimmerCircle} width={60} height={60} />
+      </View>
+    </View>
+  </View>
+);
 
 const MacroCard: React.FC<{
   value: number;
@@ -88,13 +103,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
     return (
       <View style={styles.macrosContainer}>
         {Array(3).fill(0).map((_, index) => (
-          <View key={index} style={styles.macroCard}>
-            <View style={styles.macroCardContent}>
-              <View style={styles.loadingContainer}>
-                <LoadingSpinner />
-              </View>
-            </View>
-          </View>
+          <LoadingMacroCard key={index} />
         ))}
       </View>
     );
@@ -182,18 +191,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    zIndex: 1,
-  },
   negativeValue: {
     color: '#FF6B6B',
+  },
+  shimmerValue: {
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  shimmerLabel: {
+    borderRadius: 4,
+    marginBottom: 12,
+  },
+  shimmerCircle: {
+    borderRadius: 30,
   },
 }); 

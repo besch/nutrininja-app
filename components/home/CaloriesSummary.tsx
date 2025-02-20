@@ -3,8 +3,11 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Feather } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useRouter } from 'expo-router';
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 interface CaloriesSummaryProps {
   isLoading: boolean;
@@ -24,8 +27,17 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   if (isLoading) {
     return (
       <View style={styles.mainCard}>
-        <View style={styles.loadingContainer}>
-          <LoadingSpinner />
+        <View style={styles.mainCardContent}>
+          <View style={styles.caloriesContainer}>
+            <ShimmerPlaceholder style={styles.shimmerCalories} width={120} height={40} />
+            <ShimmerPlaceholder style={styles.shimmerLabel} width={80} height={20} />
+            {burnedCalories > 0 && (
+              <ShimmerPlaceholder style={styles.shimmerBurned} width={100} height={20} />
+            )}
+          </View>
+          <View style={styles.circleProgress}>
+            <ShimmerPlaceholder style={[styles.shimmerCircle]} width={60} height={60} />
+          </View>
         </View>
       </View>
     );
@@ -147,18 +159,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    zIndex: 1,
-  },
   negativeValue: {
     color: '#FF6B6B',
+  },
+  shimmerCalories: {
+    marginBottom: 8,
+    borderRadius: 4,
+  },
+  shimmerLabel: {
+    marginBottom: 4,
+    borderRadius: 4,
+  },
+  shimmerBurned: {
+    marginTop: 4,
+    borderRadius: 4,
+  },
+  shimmerCircle: {
+    borderRadius: 30,
   },
 }); 
