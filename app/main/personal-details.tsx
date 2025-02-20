@@ -212,6 +212,12 @@ export default function PersonalDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Personal Details</Text>
+      </View>
       <ScrollView style={styles.content}>
         {/* Goal Weight Card */}
         <View style={styles.goalCard}>
@@ -477,13 +483,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
   },
   backButton: {
-    padding: 4,
+    padding: 8,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
   },
   loadingContainer: {
     flex: 1,

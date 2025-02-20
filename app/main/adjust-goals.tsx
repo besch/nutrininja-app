@@ -136,6 +136,12 @@ export default function AdjustGoalsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Adjust Goals</Text>
+      </View>
       <ScrollView style={styles.content}>
         {goals.map((goal) => (
           <TouchableOpacity 
@@ -232,13 +238,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
   },
   backButton: {
-    padding: 4,
+    padding: 8,
+    marginRight: 8,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
+    color: "#000",
   },
   content: {
     marginTop: 20,
