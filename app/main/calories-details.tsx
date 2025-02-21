@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -53,6 +53,7 @@ export default function CaloriesDetailsScreen() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: progressData, isLoading } = useQuery<DailyProgressResponse>({
     queryKey: ['progress', dateStr],
@@ -66,6 +67,19 @@ export default function CaloriesDetailsScreen() {
       return response || [];
     }
   });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['activities', dateStr] }),
+        queryClient.invalidateQueries({ queryKey: ['progress', dateStr] }),
+        queryClient.invalidateQueries({ queryKey: ['meals-summary'] })
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient, dateStr]);
 
   const handleEditActivity = (activity: Activity) => {
     router.push({
@@ -114,7 +128,17 @@ export default function CaloriesDetailsScreen() {
         </TouchableOpacity>
         <Text style={styles.title}>Calories Details</Text>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#000"
+            />
+          }
+        >
           <View style={styles.summaryCard}>
             <Text style={styles.sectionTitle}>Daily Summary</Text>
             <View style={styles.summaryRow}>
@@ -196,7 +220,17 @@ export default function CaloriesDetailsScreen() {
       </TouchableOpacity>
       <Text style={styles.title}>Calories Details</Text>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#000"
+          />
+        }
+      >
         <View style={styles.summaryCard}>
           <Text style={styles.sectionTitle}>Daily Summary</Text>
           <View style={styles.summaryRow}>

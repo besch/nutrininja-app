@@ -67,7 +67,12 @@ export const CameraScreen = () => {
     },
     onSuccess: (mealId) => {
       const dateToRefresh = selectedDate || moment().format('YYYY-MM-DD');
+      
+      // Invalidate all related queries immediately
       queryClient.invalidateQueries({ queryKey: ['meals', dateToRefresh] });
+      queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['progress', dateToRefresh] });
+      
       setProcessingPhoto(null);
       router.back();
 
@@ -76,10 +81,10 @@ export const CameraScreen = () => {
 
       // Start analysis in background
       api.meals.triggerAnalysis(mealId).then(() => {
-        // Invalidate both meals and meals-summary queries after analysis is complete
-        const dateToRefresh = selectedDate || moment().format('YYYY-MM-DD');
+        // Invalidate all related queries after analysis is complete
         queryClient.invalidateQueries({ queryKey: ['meals', dateToRefresh] });
         queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
+        queryClient.invalidateQueries({ queryKey: ['progress', dateToRefresh] });
       }).catch(error => {
         dispatch(setMealAnalysisStatus({ 
           mealId, 
