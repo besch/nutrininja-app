@@ -5,7 +5,6 @@ import moment, { Moment } from "moment";
 import { api } from "@/utils/api";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSelector, useDispatch } from "react-redux";
-import { selectIsMetric } from "@/store/userSlice";
 import { selectPendingMeals } from '@/store/analysisSlice';
 import { useSelectedDate, setSelectedDate } from '@/store/userSlice';
 import type { Meal } from "@/types";
@@ -22,7 +21,6 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [minDate, setMinDate] = useState(moment().subtract(10, "days"));
   const [maxDate, setMaxDate] = useState(moment().add(10, "days"));
-  const isMetric = useSelector(selectIsMetric);
   const router = useRouter();
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
