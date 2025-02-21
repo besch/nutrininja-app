@@ -22,27 +22,6 @@ type NutritionPeriod = 'This Week' | 'Last Week' | '2 wks. ago' | '3 wks. ago';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
-const chartConfig = {
-  backgroundColor: "#ffffff",
-  backgroundGradientFrom: "#ffffff",
-  backgroundGradientTo: "#ffffff",
-  decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(32, 137, 220, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  style: {
-    borderRadius: 16,
-  },
-  propsForDots: {
-    r: "4",
-    strokeWidth: "2",
-    stroke: "#fff",
-  },
-  propsForBackgroundLines: {
-    strokeWidth: 1,
-    stroke: "#e3e3e3",
-  },
-};
-
 const LoadingWeightCard = () => (
   <View style={styles.goalCard}>
     <View>
