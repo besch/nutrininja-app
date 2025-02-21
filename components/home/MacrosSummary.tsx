@@ -23,10 +23,26 @@ interface MacrosSummaryProps {
 const LoadingMacroCard: React.FC = () => (
   <View style={styles.macroCard}>
     <View style={styles.macroCardContent}>
-      <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
-      <ShimmerPlaceholder style={styles.shimmerLabel} width={60} height={18} />
+      <ShimmerPlaceholder 
+        style={[styles.macroValue, styles.shimmerValue]} 
+        width={80}
+      />
+      <ShimmerPlaceholder 
+        style={[styles.macroLabel, styles.shimmerLabel]} 
+        width={60}
+      />
       <View style={styles.macroProgress}>
-        <ShimmerPlaceholder style={styles.shimmerCircle} width={60} height={60} />
+        <ShimmerPlaceholder 
+          style={styles.shimmerCircle} 
+          width={60} 
+          height={60}
+          shimmerStyle={{ borderRadius: 30 }}
+        />
+        <View style={styles.circleIcon}>
+          <ShimmerPlaceholder
+            style={{ width: 24, height: 24, borderRadius: 12 }}
+          />
+        </View>
       </View>
     </View>
   </View>
@@ -168,12 +184,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 4,
+    height: 24,
   },
   macroLabel: {
     fontSize: 14,
     color: "#666",
     marginBottom: 12,
     width: '100%',
+    height: 18,
   },
   macroProgress: {
     alignItems: "center",
@@ -192,12 +210,10 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
   },
   shimmerValue: {
-    borderRadius: 4,
-    marginBottom: 4,
+    borderRadius: 8,
   },
   shimmerLabel: {
     borderRadius: 4,
-    marginBottom: 12,
   },
   shimmerCircle: {
     borderRadius: 30,

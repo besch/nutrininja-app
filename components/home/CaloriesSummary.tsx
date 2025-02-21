@@ -77,22 +77,30 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
           <View style={styles.mainCardContent}>
             <View style={styles.caloriesContainer}>
               <ShimmerPlaceholder 
-                style={[styles.shimmerCalories, { width: 100, height: 36 }]} 
+                style={[styles.caloriesText, styles.shimmerCalories]} 
+                width={100}
               />
               <ShimmerPlaceholder 
-                style={[styles.shimmerLabel, { width: 70, height: 16 }]} 
+                style={[styles.caloriesLabel, styles.shimmerLabel]} 
+                width={70}
               />
               <ShimmerPlaceholder 
-                style={[styles.shimmerBurned, { width: 90, height: 16 }]} 
+                style={[styles.burnedLabel, styles.shimmerBurned]} 
+                width={90}
               />
             </View>
             <View style={styles.circleProgress}>
               <ShimmerPlaceholder 
-                style={[styles.shimmerCircle]} 
+                style={styles.shimmerCircle}
                 width={60} 
                 height={60}
                 shimmerStyle={{ borderRadius: 30 }}
               />
+              <View style={styles.circleIcon}>
+                <ShimmerPlaceholder
+                  style={{ width: 24, height: 24, borderRadius: 12 }}
+                />
+              </View>
             </View>
           </View>
         </View>
@@ -223,14 +231,18 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     marginBottom: 4,
+    height: 36,
   },
   caloriesLabel: {
     color: "#666",
     fontSize: 13,
+    height: 16,
+    marginBottom: 4,
   },
   burnedLabel: {
     color: "#4CAF50",
     fontSize: 13,
+    height: 16,
     marginTop: 4,
   },
   circleProgress: {
@@ -249,15 +261,12 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
   },
   shimmerCalories: {
-    marginBottom: 8,
     borderRadius: 8,
   },
   shimmerLabel: {
-    marginBottom: 6,
     borderRadius: 4,
   },
   shimmerBurned: {
-    marginTop: 6,
     borderRadius: 4,
   },
   shimmerCircle: {

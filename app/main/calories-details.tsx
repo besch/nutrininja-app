@@ -116,38 +116,53 @@ export default function CaloriesDetailsScreen() {
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.summaryCard}>
-            <ShimmerPlaceholder style={[styles.shimmerTitle, { width: 120, height: 24 }]} />
+            <Text style={styles.sectionTitle}>Daily Summary</Text>
             <View style={styles.summaryRow}>
-              {[1, 2, 3].map((_, index) => (
+              {[
+                { label: 'Daily Goal', width: 60 },
+                { label: 'Consumed', width: 60 },
+                { label: 'Burned', width: 60 }
+              ].map((item, index) => (
                 <View key={index} style={styles.summaryItem}>
-                  <ShimmerPlaceholder style={{ width: 80, height: 16, marginBottom: 8 }} />
-                  <ShimmerPlaceholder style={{ width: 60, height: 24 }} />
+                  <Text style={styles.summaryLabel}>{item.label}</Text>
+                  <ShimmerPlaceholder style={[styles.summaryValue, { width: item.width, borderRadius: 8 }]} />
                 </View>
               ))}
             </View>
             <View style={styles.remainingContainer}>
-              <ShimmerPlaceholder style={{ width: 100, height: 16, marginBottom: 8 }} />
-              <ShimmerPlaceholder style={{ width: 120, height: 32 }} />
+              <Text style={styles.remainingLabel}>Remaining</Text>
+              <ShimmerPlaceholder style={[styles.remainingValue, { width: 120, borderRadius: 8 }]} />
             </View>
           </View>
 
           <View style={styles.activitiesSection}>
             <View style={styles.sectionHeader}>
-              <ShimmerPlaceholder style={{ width: 150, height: 24 }} />
-              <ShimmerPlaceholder style={{ width: 100, height: 36, borderRadius: 18 }} />
+              <Text style={styles.sectionTitle}>Today's Activities</Text>
+              <Button
+                title="Add Activity"
+                onPress={handleAddActivity}
+                buttonStyle={[styles.addButton, { opacity: 0.5 }]}
+                titleStyle={styles.addButtonTitle}
+                icon={<Feather name="plus" size={20} color="white" style={styles.addIcon} />}
+                raised={false}
+                disabled
+              />
             </View>
 
             {[1, 2, 3].map((_, index) => (
               <View key={index} style={styles.activityItem}>
-                <ShimmerPlaceholder style={{ width: 40, height: 40, borderRadius: 20 }} />
+                <View style={styles.activityIcon}>
+                  <ShimmerPlaceholder style={{ width: 40, height: 40, borderRadius: 20 }} />
+                </View>
                 <View style={styles.activityInfo}>
-                  <ShimmerPlaceholder style={{ width: 120, height: 20, marginBottom: 4 }} />
-                  <ShimmerPlaceholder style={{ width: 80, height: 16 }} />
+                  <ShimmerPlaceholder style={[styles.activityName, { width: 120, borderRadius: 4 }]} />
+                  <ShimmerPlaceholder style={[styles.activityDuration, { width: 80, borderRadius: 4 }]} />
                 </View>
                 <View style={styles.activityCalories}>
-                  <ShimmerPlaceholder style={{ width: 60, height: 20, marginBottom: 4 }} />
-                  <ShimmerPlaceholder style={{ width: 40, height: 14 }} />
+                  <ShimmerPlaceholder style={[styles.caloriesBurned, { width: 60, borderRadius: 4 }]} />
+                  <ShimmerPlaceholder style={[styles.caloriesUnit, { width: 40, borderRadius: 4 }]} />
                 </View>
+                <View style={[styles.deleteButton, { opacity: 0.5 }]} />
               </View>
             ))}
           </View>
@@ -334,9 +349,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    height: 36,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
+    height: 24,
+    marginBottom: 0,
+    lineHeight: 24,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -353,10 +378,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
+    height: 16,
   },
   summaryValue: {
     fontSize: 20,
     fontWeight: '600',
+    height: 24,
   },
   burnedValue: {
     color: '#4CAF50',
@@ -371,22 +398,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 4,
+    height: 16,
   },
   remainingValue: {
     fontSize: 28,
     fontWeight: 'bold',
+    height: 32,
   },
   negativeValue: {
     color: '#FF6B6B',
   },
   activitiesSection: {
     margin: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
   },
   addIcon: {
     marginRight: 4,
@@ -399,6 +422,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
     height: 36,
     elevation: 0,
+    alignSelf: 'center',
   },
   addButtonTitle: {
     color: '#fff',
@@ -445,10 +469,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
+    height: 20,
   },
   activityDuration: {
     fontSize: 14,
     color: '#666',
+    height: 16,
   },
   activityCalories: {
     alignItems: 'flex-end',
@@ -457,10 +483,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#4CAF50',
+    marginBottom: 4,
+    height: 20,
   },
   caloriesUnit: {
     fontSize: 12,
     color: '#666',
+    height: 14,
   },
   deleteModalText: {
     fontSize: 16,
