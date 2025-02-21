@@ -14,15 +14,13 @@ import {
   Oswald_600SemiBold,
 } from '@expo-google-fonts/oswald';
 import * as SplashScreen from 'expo-splash-screen';
-import Superwall from "@superwall/react-native-superwall"
-import Purchases from 'react-native-purchases';
 import { Platform } from "react-native";
 import { supabase } from "@/utils/supabase";
-import appsFlyer from 'react-native-appsflyer';
-import { Settings } from 'react-native-fbsdk-next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-// import * as Notifications from 'expo-notifications';
-// import { registerForPushNotificationsAsync } from '../utils/notifications';
+import { initializeAllSDKs } from '@/utils/sdkInit';
+import GoMarketMe from 'gomarketme-react-native-expo';
+import { registerForPushNotificationsAsync } from '@/utils/notifications';
+import * as Notifications from 'expo-notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +37,8 @@ function AppContent() {
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
 
+  GoMarketMe.initialize(process.env.EXPO_PUBLIC_GOMARKETME_API_KEY as string);
+
   useEffect(() => {
     const checkSessionAndFetchData = async () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -52,37 +52,34 @@ function AppContent() {
   }, [dispatch, segments]);
 
   useEffect(() => {
-    // Initialize Facebook SDK
-    Settings.initializeSDK();
-    Settings.setAdvertiserTrackingEnabled(true);
-
-    // Initialize RevenueCat
-    Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
-    if (Platform.OS === 'ios') {
-      Purchases.configure({ apiKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY as string });
-    }
-    Superwall.configure(process.env.EXPO_PUBLIC_SUPERWALL_API_KEY as string)
+    initializeAllSDKs();
   }, []);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   registerForPushNotificationsAsync().then(token => {
+  //     if (token) {
+  //       console.log('Push Notification Token:', token);
+  //       // TODO: Send this token to your backend server
+  //     }
+  //   });
 
-    const appsFlyerConfig = {
-      devKey: process.env.EXPO_PUBLIC_APPSFLYER_DEV_KEY as string,
-      isDebug: true,
-      appId: process.env.EXPO_PUBLIC_APP_ID as string,
-    };
+  //   const notificationListener = Notifications.addNotificationReceivedListener(
+  //     (notification) => {
+  //       console.log('Received notification:', notification);
+  //     }
+  //   );
 
-    appsFlyer.initSdk(
-      appsFlyerConfig,
-      (result) => {
-        console.log('AppsFlyer initialization successful:', result);
-        appsFlyer.startSdk();
-      },
-      (error) => {
-        console.error('AppsFlyer initialization failed:', error);
-      }
-    );
-  }, []);
+  //   const responseListener = Notifications.addNotificationResponseReceivedListener(
+  //     (response) => {
+  //       console.log('Notification response:', response);
+  //     }
+  //   );
+
+  //   return () => {
+  //     Notifications.removeNotificationSubscription(notificationListener);
+  //     Notifications.removeNotificationSubscription(responseListener);
+  //   };
+  // }, []);
 
   return (
     <Stack screenOptions={{
@@ -134,34 +131,6 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return null;
   }
-
-  // useEffect(() => {
-  //   registerForPushNotificationsAsync().then(token => {
-  //     if (token) {
-  //       console.log('Push Notification Token:', token);
-  //       // TODO: Send this token to your backend server
-  //     }
-  //   });
-
-  //   notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-  //     // Handle received notification
-  //     console.log('Received notification:', notification);
-  //   });
-
-  //   responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-  //     // Handle notification response (when user taps notification)
-  //     console.log('Notification response:', response);
-  //   });
-
-  //   return () => {
-  //     if (notificationListener.current) {
-  //       Notifications.removeNotificationSubscription(notificationListener.current);
-  //     }
-  //     if (responseListener.current) {
-  //       Notifications.removeNotificationSubscription(responseListener.current);
-  //     }
-  //   };
-  // }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

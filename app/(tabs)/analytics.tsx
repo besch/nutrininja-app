@@ -1060,14 +1060,13 @@ const styles = StyleSheet.create({
     minHeight: 220,
   },
   shimmerValue: {
-    borderRadius: 4,
+    borderRadius: 8,
   },
   shimmerButton: {
     borderRadius: 20,
   },
   shimmerHint: {
     borderRadius: 4,
-    marginTop: 4,
   },
   shimmerUpdateButton: {
     borderRadius: 16,
@@ -1079,7 +1078,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   shimmerPercentage: {
-    borderRadius: 4,
+    borderRadius: 8,
   },
   shimmerLabel: {
     borderRadius: 4,
