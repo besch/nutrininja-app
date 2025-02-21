@@ -62,10 +62,55 @@ export default function PersonalDetailsScreen() {
   }, [user]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: (updates: any) => api.user.updateProfile({
-      user_id: user?.id,
-      ...updates
-    }),
+    mutationFn: async (updates: any) => {
+      // First update the profile
+      const updatedData = await api.user.updateProfile({
+        user_id: user?.id,
+        ...updates
+      });
+
+      // Check if we need to regenerate the workout plan
+      const shouldRegeneratePlan = [
+        'weight',
+        'target_weight',
+        'height',
+        'birth_date',
+        'gender',
+        'pace'
+      ].some(field => field in updates);
+
+      if (shouldRegeneratePlan) {
+        // Get latest user data after update
+        const userData = {
+          birth_date: updatedData.birth_date,
+          gender: updatedData.gender,
+          height: updatedData.height,
+          weight: updatedData.weight,
+          target_weight: updatedData.target_weight,
+          goal: updatedData.goal,
+          workout_frequency: updatedData.workout_frequency,
+          diet: updatedData.diet,
+          pace: updatedData.pace,
+        };
+
+        // Generate new workout plan
+        const workoutPlan = await api.workout.generatePlan(userData);
+        
+        // Update user data with new workout plan and goals
+        const finalData = await api.user.updateProfile({
+          user_id: user?.id,
+          workout_plan: workoutPlan,
+          daily_calorie_goal: workoutPlan.daily_recommendation.calories,
+          protein_goal: workoutPlan.daily_recommendation.macros.protein.value,
+          carbs_goal: workoutPlan.daily_recommendation.macros.carbs.value,
+          fats_goal: workoutPlan.daily_recommendation.macros.fats.value,
+        });
+
+        return finalData;
+      }
+
+      return updatedData;
+    },
     onSuccess: (updatedData) => {
       dispatch(setUserData(updatedData));
       // Track goal updates
@@ -74,6 +119,7 @@ export default function PersonalDetailsScreen() {
       // Invalidate and refetch queries to ensure all screens are updated
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['weight-history'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
     },
   });
 

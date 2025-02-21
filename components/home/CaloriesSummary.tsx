@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Feather } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
@@ -46,20 +46,54 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   }, []);
 
   // Show shimmer when loading or when all values are in initial state (0)
-  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === 0;
-  if (isLoading || isInitialState) {
+  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === 0 && burnedCalories === 0;
+  const shouldShowShimmer = isLoading || isInitialState;
+
+  // Add loading animation for progress circle
+  const progressValue = totalCalories ? Math.min(1, (totalCalories - remainingCalories) / totalCalories) : 0;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!shouldShowShimmer) {
+      Animated.timing(progressAnim, {
+        toValue: progressValue,
+        duration: 1000,
+        useNativeDriver: false,
+        easing: Easing.out(Easing.cubic),
+      }).start();
+    }
+  }, [progressValue, shouldShowShimmer]);
+
+  if (shouldShowShimmer) {
     return (
-      <View style={styles.mainCard}>
-        <View style={styles.mainCardContent}>
-          <View style={styles.caloriesContainer}>
-            <ShimmerPlaceholder style={styles.shimmerCalories} width={120} height={40} />
-            <ShimmerPlaceholder style={styles.shimmerLabel} width={80} height={20} />
-            {burnedCalories > 0 && (
-              <ShimmerPlaceholder style={styles.shimmerBurned} width={100} height={20} />
-            )}
-          </View>
-          <View style={styles.circleProgress}>
-            <ShimmerPlaceholder style={[styles.shimmerCircle]} width={60} height={60} />
+      <View style={styles.container}>
+        <Animated.View style={[
+          styles.animatedBorder,
+          {
+            opacity: 0,
+          },
+        ]} />
+        <View style={styles.mainCard}>
+          <View style={styles.mainCardContent}>
+            <View style={styles.caloriesContainer}>
+              <ShimmerPlaceholder 
+                style={[styles.shimmerCalories, { width: 100, height: 36 }]} 
+              />
+              <ShimmerPlaceholder 
+                style={[styles.shimmerLabel, { width: 70, height: 16 }]} 
+              />
+              <ShimmerPlaceholder 
+                style={[styles.shimmerBurned, { width: 90, height: 16 }]} 
+              />
+            </View>
+            <View style={styles.circleProgress}>
+              <ShimmerPlaceholder 
+                style={[styles.shimmerCircle]} 
+                width={60} 
+                height={60}
+                shimmerStyle={{ borderRadius: 30 }}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -216,14 +250,14 @@ const styles = StyleSheet.create({
   },
   shimmerCalories: {
     marginBottom: 8,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   shimmerLabel: {
-    marginBottom: 4,
+    marginBottom: 6,
     borderRadius: 4,
   },
   shimmerBurned: {
-    marginTop: 4,
+    marginTop: 6,
     borderRadius: 4,
   },
   shimmerCircle: {

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
@@ -41,6 +41,9 @@ const MacroCard: React.FC<{
   isNegative: boolean;
 }> = ({ value, label, icon, color, total, isNegative }) => {
   const goalValue = isNegative ? total : (total + value);
+  const progressValue = isNegative 
+    ? Math.min(1, total ? Math.abs(value) / total : 0)
+    : Math.min(1, goalValue ? total / goalValue : 0);
 
   return (
     <View style={styles.macroCard}>
@@ -56,29 +59,16 @@ const MacroCard: React.FC<{
           {isNegative ? `${label} over` : `${label} left`}
         </Text>
         <View style={styles.macroProgress}>
-          {isNegative ? (
-            <Progress.Circle
-              size={60}
-              progress={Math.min(1, total ? Math.abs(value) / total : 0)}
-              thickness={7}
-              color="#FF6B6B"
-              unfilledColor="#eee"
-              borderWidth={0}
-              animated
-              strokeCap="round"
-            />
-          ) : (
-            <Progress.Circle
-              size={60}
-              progress={Math.min(1, goalValue ? total / goalValue : 0)}
-              thickness={7}
-              color={color}
-              unfilledColor="#eee"
-              borderWidth={0}
-              animated
-              strokeCap="round"
-            />
-          )}
+          <Progress.Circle
+            size={60}
+            progress={progressValue}
+            thickness={7}
+            color={isNegative ? "#FF6B6B" : color}
+            unfilledColor="#eee"
+            borderWidth={0}
+            animated
+            strokeCap="round"
+          />
           <View style={styles.circleIcon}>
             <Ionicons 
               name={icon as any} 
@@ -104,8 +94,9 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
     proteins.remaining === 0 && proteins.total === 0 &&
     carbs.remaining === 0 && carbs.total === 0 &&
     fats.remaining === 0 && fats.total === 0;
+  const shouldShowShimmer = isLoading || isInitialState;
 
-  if (isLoading || isInitialState) {
+  if (shouldShowShimmer) {
     return (
       <View style={styles.macrosContainer}>
         {Array(3).fill(0).map((_, index) => (
