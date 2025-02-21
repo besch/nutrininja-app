@@ -25,6 +25,17 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   const router = useRouter();
   const pulseAnim = new Animated.Value(0);
 
+  // Show shimmer when loading or when all values are in initial state (0)
+  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === 0 && burnedCalories === 0;
+  const shouldShowShimmer = isLoading || isInitialState;
+
+  // Calculate consumed calories and progress
+  const initialCalories = totalCalories + remainingCalories; // This is what user started with
+  const consumedCalories = initialCalories - remainingCalories; // How much they've consumed
+  const progressValue = initialCalories > 0 ? consumedCalories / initialCalories : 0;
+
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
@@ -44,14 +55,6 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
 
     return () => pulse.stop();
   }, []);
-
-  // Show shimmer when loading or when all values are in initial state (0)
-  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === 0 && burnedCalories === 0;
-  const shouldShowShimmer = isLoading || isInitialState;
-
-  // Add loading animation for progress circle
-  const progressValue = totalCalories ? Math.min(1, (totalCalories - remainingCalories) / totalCalories) : 0;
-  const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!shouldShowShimmer) {
@@ -154,7 +157,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
             {remainingCalories < 0 ? (
               <Progress.Circle
                 size={60}
-                progress={Math.min(1, totalCalories ? Math.abs(remainingCalories) / totalCalories : 0)}
+                progress={Math.min(1, Math.abs(remainingCalories) / initialCalories)}
                 thickness={7}
                 color="#FF6B6B"
                 unfilledColor="#000"
@@ -165,7 +168,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
             ) : (
               <Progress.Circle
                 size={60}
-                progress={Math.min(1, totalCalories ? (totalCalories - remainingCalories) / totalCalories : 0)}
+                progress={Math.min(1, progressValue)}
                 thickness={7}
                 color="#000"
                 unfilledColor="#eee"
