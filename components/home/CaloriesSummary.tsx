@@ -45,11 +45,6 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
     );
   }
 
-  // Calculate the net calories (total + remaining when not over)
-  const netCalories = totalCalories - remainingCalories;
-  const finalCalories = netCalories - burnedCalories;
-  const isOver = finalCalories > totalCalories;
-
   return (
     <TouchableOpacity 
       style={styles.mainCard}
@@ -60,15 +55,15 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
         <View style={styles.caloriesContainer}>
           <Text style={[
             styles.caloriesText,
-            isOver && styles.negativeValue
+            remainingCalories < 0 && styles.negativeValue
           ]}>
-            {Math.abs(totalCalories - finalCalories)}
+            {Math.abs(remainingCalories)}
           </Text>
           <Text style={[
             styles.caloriesLabel,
-            isOver && styles.negativeValue
+            remainingCalories < 0 && styles.negativeValue
           ]}>
-            {isOver ? 'Calories over' : 'Calories left'}
+            {remainingCalories < 0 ? 'Calories over' : 'Calories left'}
           </Text>
           {burnedCalories > 0 && (
             <Text style={styles.burnedLabel}>
@@ -77,10 +72,10 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
           )}
         </View>
         <View style={styles.circleProgress}>
-          {isOver ? (
+          {remainingCalories < 0 ? (
             <Progress.Circle
               size={60}
-              progress={Math.min(1, totalCalories ? Math.abs(finalCalories - totalCalories) / totalCalories : 0)}
+              progress={Math.min(1, totalCalories ? Math.abs(remainingCalories) / totalCalories : 0)}
               thickness={7}
               color="#FF6B6B"
               unfilledColor="#000"
@@ -91,7 +86,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
           ) : (
             <Progress.Circle
               size={60}
-              progress={Math.min(1, totalCalories ? finalCalories / totalCalories : 0)}
+              progress={Math.min(1, totalCalories ? (totalCalories - remainingCalories) / totalCalories : 0)}
               thickness={7}
               color="#000"
               unfilledColor="#eee"
@@ -101,7 +96,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
             />
           )}
           <View style={styles.circleIcon}>
-            <Feather name="activity" size={24} color={isOver ? "#FF6B6B" : "#000"} />
+            <Feather name="activity" size={24} color={remainingCalories < 0 ? "#FF6B6B" : "#000"} />
           </View>
         </View>
       </View>
