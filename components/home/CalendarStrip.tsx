@@ -17,6 +17,8 @@ interface CalendarStripProps {
 
 interface DayCalorieProgress {
   totalCalories: number;
+  remainingCalories: number;
+  burnedCalories: number;
 }
 
 const DayComponent = ({ 
@@ -37,8 +39,16 @@ const DayComponent = ({
   const momentDate = moment(date);
   const dateStr = momentDate.format('YYYY-MM-DD');
   const dayData = calorieData?.[dateStr];
-  const progress = dayData?.totalCalories ? Math.min((dayData.totalCalories / dailyCalorieGoal) * 100, 100) : 0;
-  const isOverGoal = dayData?.totalCalories ? dayData.totalCalories > dailyCalorieGoal : false;
+  
+  const progress = useMemo(() => {
+    if (!dayData) return 0;
+    const { totalCalories, remainingCalories, burnedCalories } = dayData;
+    const adjustedGoal = dailyCalorieGoal + burnedCalories;
+    const consumedCalories = totalCalories;
+    return adjustedGoal > 0 ? (consumedCalories / adjustedGoal) * 100 : 0;
+  }, [dayData, dailyCalorieGoal]);
+
+  const isOverGoal = dayData?.remainingCalories ? dayData.remainingCalories < 0 : false;
   
   const radius = 16;
   const strokeWidth = 3;
@@ -114,8 +124,8 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
       );
       return data as Record<string, DayCalorieProgress>;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 30 * 60 * 1000 // Keep in cache for 30 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000
   });
 
   return (
