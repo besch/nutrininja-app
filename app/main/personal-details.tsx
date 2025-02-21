@@ -119,6 +119,7 @@ export default function PersonalDetailsScreen() {
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['weight-history'] });
       queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
   });
 

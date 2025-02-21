@@ -13,6 +13,7 @@ import { AppDispatch } from "@/store";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { trackNutritionGoalSet } from '@/utils/appsFlyerEvents';
+import { useQueryClient } from "@tanstack/react-query";
 
 type GoalType = "daily_calorie_goal" | "protein_goal" | "carbs_goal" | "fats_goal";
 
@@ -33,6 +34,7 @@ export default function AdjustGoalsScreen() {
   const [editingGoal, setEditingGoal] = useState<GoalType | null>(null);
   const [showGeneratedGoals, setShowGeneratedGoals] = useState(false);
   const [generatedGoals, setGeneratedGoals] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const goals: Goal[] = [
     {
@@ -88,6 +90,8 @@ export default function AdjustGoalsScreen() {
         carbs_goal: updatedData.carbs_goal,
         fats_goal: updatedData.fats_goal,
       });
+      // Invalidate progress queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
   });
 
