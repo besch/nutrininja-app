@@ -217,9 +217,10 @@ export default function CaloriesDetailsScreen() {
             <Button
               title="Add Activity"
               onPress={handleAddActivity}
-              type="clear"
-              icon={<Feather name="plus" size={20} color="black" style={styles.addIcon} />}
+              buttonStyle={styles.addButton}
               titleStyle={styles.addButtonTitle}
+              icon={<Feather name="plus" size={20} color="white" style={styles.addIcon} />}
+              raised={false}
             />
           </View>
 
@@ -336,7 +337,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -389,10 +389,20 @@ const styles = StyleSheet.create({
   addIcon: {
     marginRight: 4,
   },
+  addButton: {
+    backgroundColor: '#000',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    minHeight: 0,
+    height: 36,
+    elevation: 0,
+  },
   addButtonTitle: {
-    color: '#000',
+    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+    marginLeft: 4,
   },
   emptyState: {
     padding: 32,
