@@ -132,7 +132,7 @@ export default function PersonalDetailsScreen() {
 
   const displayWeight = (kg: number | null) => {
     if (!kg) return '-';
-    return isMetric ? `${kg.toFixed(1)} kg` : `${Math.round(kg * 2.20462)} lbs`;
+    return isMetric ? `${Math.round(kg)} kg` : `${Math.round(kg * 2.20462)} lbs`;
   };
 
   const displayHeight = (cm: number | null) => {
@@ -362,7 +362,7 @@ export default function PersonalDetailsScreen() {
             <Text style={styles.detailLabel}>Weight change pace</Text>
             <View style={styles.detailValueContainer}>
               <Text style={styles.detailValue}>
-                {pace ? `${isMetric ? pace.toFixed(1) : (pace * 2.20462).toFixed(1)} ${isMetric ? 'kg' : 'lbs'}/week` : '-'}
+                {pace ? `${Math.round(isMetric ? pace : (pace * 2.20462))} ${isMetric ? 'kg' : 'lbs'}/week` : '-'}
               </Text>
               <Ionicons
                 name="pencil"
@@ -401,25 +401,25 @@ export default function PersonalDetailsScreen() {
         onClose={() => setEditField(null)}
         onSave={handleGoalWeightChange}
         title="Change Goal Weight"
-        initialValue={goalWeight ? (isMetric ? goalWeight : Math.round(goalWeight * 2.20462)) : 0}
+        initialValue={goalWeight ? (isMetric ? Math.round(goalWeight) : Math.round(goalWeight * 2.20462)) : 0}
         unit={isMetric ? "kg" : "lb"}
       />
 
       <NumericInputOverlay
         isVisible={editField === "current_weight"}
         onClose={() => setEditField(null)}
-        onSave={(value) => handleCurrentWeightChange(isMetric ? value : value / 2.20462)}
+        onSave={(value) => handleCurrentWeightChange(isMetric ? value : Math.round(value / 2.20462))}
         title="Update Current Weight"
-        initialValue={currentWeight ? (isMetric ? currentWeight : Math.round(currentWeight * 2.20462)) : 0}
+        initialValue={currentWeight ? (isMetric ? Math.round(currentWeight) : Math.round(currentWeight * 2.20462)) : 0}
         unit={isMetric ? "kg" : "lb"}
       />
 
       <NumericInputOverlay
         isVisible={editField === "height"}
         onClose={() => setEditField(null)}
-        onSave={(value) => handleHeightChange(isMetric ? value : value * 2.54)}
+        onSave={(value) => handleHeightChange(isMetric ? value : Math.round(value * 2.54))}
         title="Update Height"
-        initialValue={height ? (isMetric ? height : Math.round(height / 2.54)) : 0}
+        initialValue={height ? (isMetric ? Math.round(height) : Math.round(height / 2.54)) : 0}
         unit={isMetric ? "cm" : "in"}
       />
 

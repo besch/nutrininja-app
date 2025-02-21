@@ -59,9 +59,8 @@ export default function NumericInputOverlay({
     try {
       setIsLoading(true);
       setError(null);
-      const normalizedValue = value.replace(',', '.');
       const numericValue = Math.min(
-        Math.max(0, parseFloat(normalizedValue) || 0),
+        Math.max(0, parseInt(value) || 0),
         getMaxValue(unit)
       );
       await onSave(numericValue);
@@ -83,18 +82,9 @@ export default function NumericInputOverlay({
   };
 
   const handleChangeText = (text: string) => {
-    const normalizedText = text.replace(',', '.');
-    
-    if (unit === 'kg') {
-      const regex = /^\d*\.?\d{0,1}$/;
-      if (regex.test(normalizedText) || normalizedText === '') {
-        setValue(text);
-      }
-    } else {
-      const regex = /^\d*$/;
-      if (regex.test(normalizedText)) {
-        setValue(text);
-      }
+    const regex = /^\d*$/;
+    if (regex.test(text)) {
+      setValue(text);
     }
   };
 
