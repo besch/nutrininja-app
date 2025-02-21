@@ -4,12 +4,15 @@ import { Text, Button } from '@rneui/themed';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/utils/api';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ActivityIcon from '@/components/ActivityIcon';
 import { ACTIVITY_CATEGORIES, ActivityType, ActivityCategory, IconNames } from '@/types';
 import { useSelectedDate } from '@/store/userSlice';
 import BaseOverlay from '@/components/overlays/BaseOverlay';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 interface Activity {
   id: string;
@@ -105,8 +108,50 @@ export default function CaloriesDetailsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <LoadingSpinner />
+      <View style={styles.container}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Calories Details</Text>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.summaryCard}>
+            <ShimmerPlaceholder style={[styles.shimmerTitle, { width: 120, height: 24 }]} />
+            <View style={styles.summaryRow}>
+              {[1, 2, 3].map((_, index) => (
+                <View key={index} style={styles.summaryItem}>
+                  <ShimmerPlaceholder style={{ width: 80, height: 16, marginBottom: 8 }} />
+                  <ShimmerPlaceholder style={{ width: 60, height: 24 }} />
+                </View>
+              ))}
+            </View>
+            <View style={styles.remainingContainer}>
+              <ShimmerPlaceholder style={{ width: 100, height: 16, marginBottom: 8 }} />
+              <ShimmerPlaceholder style={{ width: 120, height: 32 }} />
+            </View>
+          </View>
+
+          <View style={styles.activitiesSection}>
+            <View style={styles.sectionHeader}>
+              <ShimmerPlaceholder style={{ width: 150, height: 24 }} />
+              <ShimmerPlaceholder style={{ width: 100, height: 36, borderRadius: 18 }} />
+            </View>
+
+            {[1, 2, 3].map((_, index) => (
+              <View key={index} style={styles.activityItem}>
+                <ShimmerPlaceholder style={{ width: 40, height: 40, borderRadius: 20 }} />
+                <View style={styles.activityInfo}>
+                  <ShimmerPlaceholder style={{ width: 120, height: 20, marginBottom: 4 }} />
+                  <ShimmerPlaceholder style={{ width: 80, height: 16 }} />
+                </View>
+                <View style={styles.activityCalories}>
+                  <ShimmerPlaceholder style={{ width: 60, height: 20, marginBottom: 4 }} />
+                  <ShimmerPlaceholder style={{ width: 40, height: 14 }} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -416,5 +461,9 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 107, 107, 0.1)',
+  },
+  shimmerTitle: {
+    marginBottom: 16,
+    borderRadius: 4,
   },
 }); 
