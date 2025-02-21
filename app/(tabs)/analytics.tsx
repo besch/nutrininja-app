@@ -7,7 +7,7 @@ import type { WeightCheckin, Meal } from "@/types";
 import { useSelector, useDispatch } from "react-redux";
 import { selectIsMetric, selectIsLoading, setUnitPreference, setUserData, fetchUserData } from "@/store/userSlice";
 import moment from "moment";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
 import { Button } from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -387,6 +387,31 @@ export default function AnalyticsScreen() {
     return userData.weight > userData.target_weight ? 'Weight loss needed' : 'Weight gain needed';
   };
 
+  const regenerateWorkoutPlanMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      // Generate new workout plan
+      const workoutPlan = await api.workout.generatePlan(userData);
+      
+      // Update user data with new workout plan and goals
+      const finalData = await api.user.updateProfile({
+        user_id: userData?.id,
+        workout_plan: workoutPlan,
+        daily_calorie_goal: workoutPlan.daily_recommendation.calories,
+        protein_goal: workoutPlan.daily_recommendation.macros.protein.value,
+        carbs_goal: workoutPlan.daily_recommendation.macros.carbs.value,
+        fats_goal: workoutPlan.daily_recommendation.macros.fats.value,
+      });
+
+      return finalData;
+    },
+    onSuccess: (updatedData) => {
+      dispatch(setUserData(updatedData));
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+    },
+  });
+
   const handleWeightGoalUpdate = async (newGoal: number) => {
     setIsUpdating(true);
     try {
@@ -396,17 +421,23 @@ export default function AnalyticsScreen() {
       await api.user.updateProfile({ target_weight: weightInKg });
       
       // Invalidate and refetch queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
-        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
-      ]);
+      await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      await queryClient.invalidateQueries({ queryKey: ['weight-history'] });
       
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
-        queryClient.refetchQueries({ queryKey: ['weight-history'] })
-      ]);
-
       setShowWeightGoalOverlay(false);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: userData?.birth_date,
+        gender: userData?.gender,
+        height: userData?.height,
+        weight: userData?.weight,
+        target_weight: weightInKg,
+        goal: userData?.goal,
+        workout_frequency: userData?.workout_frequency,
+        diet: userData?.diet,
+        pace: userData?.pace,
+      });
     } catch (error) {
       console.error('Error updating weight goal:', error);
     } finally {
@@ -449,20 +480,31 @@ export default function AnalyticsScreen() {
     setIsUpdating(true);
     try {
       const weightInKg = isMetric ? weight : weight / 2.20462;
+      
+      // First create a weight check-in
       await api.weight.checkIn(Number(weightInKg.toFixed(1)), moment().format('YYYY-MM-DD'));
       
-      // Invalidate and refetch both queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
-        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
-      ]);
+      // Then update the profile
+      await api.user.updateProfile({ weight: weightInKg });
       
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
-        queryClient.refetchQueries({ queryKey: ['weight-history'] })
-      ]);
-
+      // Invalidate and refetch queries
+      await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      await queryClient.invalidateQueries({ queryKey: ['weight-history'] });
+      
       setShowWeightOverlay(false);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: userData?.birth_date,
+        gender: userData?.gender,
+        height: userData?.height,
+        weight: weightInKg,
+        target_weight: userData?.target_weight,
+        goal: userData?.goal,
+        workout_frequency: userData?.workout_frequency,
+        diet: userData?.diet,
+        pace: userData?.pace,
+      });
     } catch (error) {
       console.error('Error checking in weight:', error);
     } finally {

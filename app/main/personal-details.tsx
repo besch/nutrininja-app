@@ -62,52 +62,11 @@ export default function PersonalDetailsScreen() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: any) => {
-      // First update the profile
+      // Only update the profile
       const updatedData = await api.user.updateProfile({
         user_id: user?.id,
         ...updates
       });
-
-      // Check if we need to regenerate the workout plan
-      const shouldRegeneratePlan = [
-        'weight',
-        'target_weight',
-        'height',
-        'birth_date',
-        'gender',
-        'pace'
-      ].some(field => field in updates);
-
-      if (shouldRegeneratePlan) {
-        // Get latest user data after update
-        const userData = {
-          birth_date: updatedData.birth_date,
-          gender: updatedData.gender,
-          height: updatedData.height,
-          weight: updatedData.weight,
-          target_weight: updatedData.target_weight,
-          goal: updatedData.goal,
-          workout_frequency: updatedData.workout_frequency,
-          diet: updatedData.diet,
-          pace: updatedData.pace,
-        };
-
-        // Generate new workout plan
-        const workoutPlan = await api.workout.generatePlan(userData);
-        
-        // Update user data with new workout plan and goals
-        const finalData = await api.user.updateProfile({
-          user_id: user?.id,
-          workout_plan: workoutPlan,
-          daily_calorie_goal: workoutPlan.daily_recommendation.calories,
-          protein_goal: workoutPlan.daily_recommendation.macros.protein.value,
-          carbs_goal: workoutPlan.daily_recommendation.macros.carbs.value,
-          fats_goal: workoutPlan.daily_recommendation.macros.fats.value,
-        });
-
-        return finalData;
-      }
-
       return updatedData;
     },
     onSuccess: (updatedData) => {
@@ -118,6 +77,31 @@ export default function PersonalDetailsScreen() {
       // Invalidate and refetch queries to ensure all screens are updated
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['weight-history'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['progress'] });
+    },
+  });
+
+  const regenerateWorkoutPlanMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      // Generate new workout plan
+      const workoutPlan = await api.workout.generatePlan(userData);
+      
+      // Update user data with new workout plan and goals
+      const finalData = await api.user.updateProfile({
+        user_id: user?.id,
+        workout_plan: workoutPlan,
+        daily_calorie_goal: workoutPlan.daily_recommendation.calories,
+        protein_goal: workoutPlan.daily_recommendation.macros.protein.value,
+        carbs_goal: workoutPlan.daily_recommendation.macros.carbs.value,
+        fats_goal: workoutPlan.daily_recommendation.macros.fats.value,
+      });
+
+      return finalData;
+    },
+    onSuccess: (updatedData) => {
+      dispatch(setUserData(updatedData));
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
       queryClient.invalidateQueries({ queryKey: ['progress'] });
     },
@@ -159,20 +143,21 @@ export default function PersonalDetailsScreen() {
       
       // Update profile with the new goal weight
       await updateProfileMutation.mutateAsync({ target_weight: weightInKg });
-      
-      // Invalidate and refetch queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
-        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
-      ]);
-      
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
-        queryClient.refetchQueries({ queryKey: ['weight-history'] })
-      ]);
-
       setGoalWeight(weightInKg);
       setEditField(null);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: user?.birth_date,
+        gender: user?.gender,
+        height: user?.height,
+        weight: user?.weight,
+        target_weight: weightInKg,
+        goal: user?.goal,
+        workout_frequency: user?.workout_frequency,
+        diet: user?.diet,
+        pace: user?.pace,
+      });
     } catch (error) {
       console.error('Error updating goal weight:', error);
     }
@@ -187,19 +172,20 @@ export default function PersonalDetailsScreen() {
       
       // Then update the profile
       await updateProfileMutation.mutateAsync({ weight: weightInKg });
-      
-      // Invalidate and refetch relevant queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] }),
-        queryClient.invalidateQueries({ queryKey: ['weight-history'] })
-      ]);
-      
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['user-profile'] }),
-        queryClient.refetchQueries({ queryKey: ['weight-history'] })
-      ]);
-
       setEditField(null);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: user?.birth_date,
+        gender: user?.gender,
+        height: user?.height,
+        weight: weightInKg,
+        target_weight: user?.target_weight,
+        goal: user?.goal,
+        workout_frequency: user?.workout_frequency,
+        diet: user?.diet,
+        pace: user?.pace,
+      });
     } catch (error) {
       console.error('Error updating current weight:', error);
     }
@@ -211,6 +197,19 @@ export default function PersonalDetailsScreen() {
       await updateProfileMutation.mutateAsync({ height: heightValue });
       setHeight(heightValue);
       setEditField(null);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: user?.birth_date,
+        gender: user?.gender,
+        height: heightValue,
+        weight: user?.weight,
+        target_weight: user?.target_weight,
+        goal: user?.goal,
+        workout_frequency: user?.workout_frequency,
+        diet: user?.diet,
+        pace: user?.pace,
+      });
     } catch (error) {
       console.error('Error updating height:', error);
     }
@@ -221,6 +220,19 @@ export default function PersonalDetailsScreen() {
       await updateProfileMutation.mutateAsync({ birth_date: value });
       setBirthDate(value);
       setEditField(null);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: value,
+        gender: user?.gender,
+        height: user?.height,
+        weight: user?.weight,
+        target_weight: user?.target_weight,
+        goal: user?.goal,
+        workout_frequency: user?.workout_frequency,
+        diet: user?.diet,
+        pace: user?.pace,
+      });
     } catch (error) {
       console.error('Error updating birth date:', error);
     }
@@ -231,6 +243,19 @@ export default function PersonalDetailsScreen() {
       await updateProfileMutation.mutateAsync({ gender: value });
       setGender(value);
       setEditField(null);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: user?.birth_date,
+        gender: value,
+        height: user?.height,
+        weight: user?.weight,
+        target_weight: user?.target_weight,
+        goal: user?.goal,
+        workout_frequency: user?.workout_frequency,
+        diet: user?.diet,
+        pace: user?.pace,
+      });
     } catch (error) {
       console.error('Error updating gender:', error);
     }
@@ -241,6 +266,19 @@ export default function PersonalDetailsScreen() {
       await updateProfileMutation.mutateAsync({ pace: value });
       setPace(value);
       setEditField(null);
+
+      // Regenerate workout plan in the background
+      regenerateWorkoutPlanMutation.mutate({
+        birth_date: user?.birth_date,
+        gender: user?.gender,
+        height: user?.height,
+        weight: user?.weight,
+        target_weight: user?.target_weight,
+        goal: user?.goal,
+        workout_frequency: user?.workout_frequency,
+        diet: user?.diet,
+        pace: value,
+      });
     } catch (error) {
       console.error('Error updating pace:', error);
     }
