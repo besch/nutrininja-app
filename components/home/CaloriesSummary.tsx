@@ -24,7 +24,9 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
 }) => {
   const router = useRouter();
 
-  if (isLoading) {
+  // Show shimmer when loading or when all values are in initial state (0)
+  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === 0;
+  if (isLoading || isInitialState) {
     return (
       <View style={styles.mainCard}>
         <View style={styles.mainCardContent}>

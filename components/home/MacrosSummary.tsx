@@ -99,7 +99,13 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
   carbs = { remaining: 0, total: 0 },
   fats = { remaining: 0, total: 0 },
 }) => {
-  if (isLoading) {
+  // Show shimmer when loading or when all values are in initial state (0)
+  const isInitialState = !isLoading && 
+    proteins.remaining === 0 && proteins.total === 0 &&
+    carbs.remaining === 0 && carbs.total === 0 &&
+    fats.remaining === 0 && fats.total === 0;
+
+  if (isLoading || isInitialState) {
     return (
       <View style={styles.macrosContainer}>
         {Array(3).fill(0).map((_, index) => (
