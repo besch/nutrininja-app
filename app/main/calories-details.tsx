@@ -342,6 +342,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
+    marginTop: 16,
+    gap: 16,
   },
   summaryItem: {
     flex: 1,
