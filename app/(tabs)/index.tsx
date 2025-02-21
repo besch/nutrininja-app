@@ -136,12 +136,6 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const handleWeightCheckin = useCallback(async (weight: number) => {
-    const weightInKg = isMetric ? weight : weight / 2.20462;
-    await api.weight.checkIn(Number(weightInKg.toFixed(1)), selectedDate.format('YYYY-MM-DD'));
-    queryClient.invalidateQueries({ queryKey: ['weight', selectedDate.format('YYYY-MM-DD')] });
-  }, [selectedDate, queryClient, isMetric]);
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
