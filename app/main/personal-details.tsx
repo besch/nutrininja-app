@@ -32,7 +32,6 @@ export default function PersonalDetailsScreen() {
   const isMetric = useSelector(selectIsMetric);
   const user = useSelector(selectUser);
   const isLoading = useSelector(selectIsLoading);
-  const [isUpdating, setIsUpdating] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -154,7 +153,6 @@ export default function PersonalDetailsScreen() {
   };
 
   const handleGoalWeightChange = async (value: number) => {
-    setIsUpdating(true);
     try {
       const weightInKg = isMetric ? value : value / 2.20462;
       
@@ -173,15 +171,13 @@ export default function PersonalDetailsScreen() {
       ]);
 
       setGoalWeight(weightInKg);
+      setEditField(null);
     } catch (error) {
       console.error('Error updating goal weight:', error);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleCurrentWeightChange = async (value: number) => {
-    setIsUpdating(true);
     try {
       const weightInKg = isMetric ? value : value / 2.20462;
       
@@ -201,52 +197,55 @@ export default function PersonalDetailsScreen() {
         queryClient.refetchQueries({ queryKey: ['user-profile'] }),
         queryClient.refetchQueries({ queryKey: ['weight-history'] })
       ]);
-    } finally {
-      setIsUpdating(false);
+
+      setEditField(null);
+    } catch (error) {
+      console.error('Error updating current weight:', error);
     }
   };
 
   const handleHeightChange = async (value: number) => {
-    setIsUpdating(true);
     try {
-      setHeight(value);
-      await updateProfileMutation.mutateAsync({ height: value });
-    } finally {
-      setIsUpdating(false);
+      const heightValue = isMetric ? value : value * 2.54;
+      await updateProfileMutation.mutateAsync({ height: heightValue });
+      setHeight(heightValue);
+      setEditField(null);
+    } catch (error) {
+      console.error('Error updating height:', error);
     }
   };
 
   const handleBirthDateChange = async (value: string) => {
-    setIsUpdating(true);
     try {
-      setBirthDate(value);
       await updateProfileMutation.mutateAsync({ birth_date: value });
-    } finally {
-      setIsUpdating(false);
+      setBirthDate(value);
+      setEditField(null);
+    } catch (error) {
+      console.error('Error updating birth date:', error);
     }
   };
 
   const handleGenderChange = async (value: "male" | "female" | "other") => {
-    setIsUpdating(true);
     try {
-      setGender(value);
       await updateProfileMutation.mutateAsync({ gender: value });
-    } finally {
-      setIsUpdating(false);
+      setGender(value);
+      setEditField(null);
+    } catch (error) {
+      console.error('Error updating gender:', error);
     }
   };
 
   const handlePaceChange = async (value: number) => {
-    setIsUpdating(true);
     try {
-      setPace(value);
       await updateProfileMutation.mutateAsync({ pace: value });
-    } finally {
-      setIsUpdating(false);
+      setPace(value);
+      setEditField(null);
+    } catch (error) {
+      console.error('Error updating pace:', error);
     }
   };
 
-  if (isLoading || isUpdating) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>

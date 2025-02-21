@@ -114,7 +114,7 @@ export default function AdjustGoalsScreen() {
   const handleGoalChange = async (value: number) => {
     if (!editingGoal) return;
     const updates = { [editingGoal]: value };
-    updateGoalMutation.mutate(updates);
+    await updateGoalMutation.mutateAsync(updates);
   };
 
   const handleConfirmGeneratedGoals = async () => {
