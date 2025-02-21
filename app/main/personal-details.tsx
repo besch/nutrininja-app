@@ -132,13 +132,13 @@ export default function PersonalDetailsScreen() {
 
   const displayWeight = (kg: number | null) => {
     if (!kg) return '-';
-    return isMetric ? `${kg} kg` : `${Math.round(kg * 2.20462)} lbs`;
+    return isMetric ? `${kg.toFixed(1)} kg` : `${Math.round(kg * 2.20462)} lbs`;
   };
 
   const displayHeight = (cm: number | null) => {
     if (!cm) return '-';
-    if (isMetric) return `${cm} cm`;
-    const inches = cm / 2.54;
+    if (isMetric) return `${Math.round(cm)} cm`;
+    const inches = Math.round(cm / 2.54);
     const feet = Math.floor(inches / 12);
     const remainingInches = Math.round(inches % 12);
     return `${feet}'${remainingInches}"`;
