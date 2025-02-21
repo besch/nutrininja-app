@@ -5,12 +5,15 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { api } from "@/utils/api";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import BaseOverlay from "@/components/overlays/BaseOverlay";
 import { selectUser, selectIsMetric, selectIsLoading, fetchUserData } from "@/store/userSlice";
 import { signOut } from "@/utils/auth";
 import { AppDispatch } from "@/store";
 import { trackAccountDeleted } from '@/utils/appsFlyerEvents';
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -73,10 +76,70 @@ export default function SettingsScreen() {
     return `${feet}'${remainingInches}"`;
   };
 
+  const LoadingStatsSection = () => (
+    <View style={styles.statsSection}>
+      <View style={styles.statRow}>
+        <Text style={styles.label}>Age</Text>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={60} height={20} />
+      </View>
+      <View style={styles.statRow}>
+        <Text style={styles.label}>Height</Text>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={20} />
+      </View>
+      <View style={styles.statRow}>
+        <Text style={styles.label}>Current weight</Text>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={70} height={20} />
+      </View>
+    </View>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <LoadingSpinner />
+        <ScrollView>
+          <Text h3 style={styles.title}>Settings</Text>
+
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.menuItem}>
+            <View>
+              <ShimmerPlaceholder style={styles.shimmerEmail} width={200} height={20} />
+              <ShimmerPlaceholder style={styles.shimmerSubtext} width={100} height={16} />
+            </View>
+            <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
+          </View>
+
+          <LoadingStatsSection />
+
+          <Text style={styles.sectionTitle}>Customization</Text>
+          <View style={styles.menuItem}>
+            <ShimmerPlaceholder style={styles.shimmerMenuItem} width={150} height={20} />
+            <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
+          </View>
+          <View style={styles.menuItem}>
+            <View>
+              <ShimmerPlaceholder style={styles.shimmerMenuItem} width={120} height={20} />
+              <ShimmerPlaceholder style={styles.shimmerSubtext} width={180} height={16} />
+            </View>
+            <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
+          </View>
+
+          <Text style={styles.sectionTitle}>Legal</Text>
+          <View style={styles.menuItem}>
+            <ShimmerPlaceholder style={styles.shimmerMenuItem} width={160} height={20} />
+            <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
+          </View>
+          <View style={styles.menuItem}>
+            <ShimmerPlaceholder style={styles.shimmerMenuItem} width={120} height={20} />
+            <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
+          </View>
+
+          <View style={styles.menuItem}>
+            <ShimmerPlaceholder style={styles.shimmerMenuItem} width={130} height={20} />
+            <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
+          </View>
+
+          <Text style={styles.version}>VERSION 1.0.5</Text>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -281,5 +344,22 @@ const styles = StyleSheet.create({
   unitTextActive: {
     color: "#000",
     fontWeight: "500",
+  },
+  shimmerEmail: {
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  shimmerSubtext: {
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  shimmerMenuItem: {
+    borderRadius: 4,
+  },
+  shimmerIcon: {
+    borderRadius: 12,
+  },
+  shimmerValue: {
+    borderRadius: 4,
   },
 });

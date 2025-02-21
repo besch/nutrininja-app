@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet, Animated, Easing } from 'react-native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';

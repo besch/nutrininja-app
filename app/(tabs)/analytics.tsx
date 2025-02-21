@@ -5,18 +5,22 @@ import { LineChart, BarChart } from "react-native-gifted-charts";
 import { api } from "@/utils/api";
 import type { WeightCheckin, Meal } from "@/types";
 import { useSelector, useDispatch } from "react-redux";
-import { selectUser, selectIsMetric, selectIsLoading, setUnitPreference, setUserData, fetchUserData } from "@/store/userSlice";
+import { selectIsMetric, selectIsLoading, setUnitPreference, setUserData, fetchUserData } from "@/store/userSlice";
 import moment from "moment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
 import { Button } from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { AppDispatch } from "@/store";
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const screenWidth = Dimensions.get("window").width;
 
 type TimePeriod = '90 Days' | '6 Months' | '1 Year' | 'All time';
 type NutritionPeriod = 'This Week' | 'Last Week' | '2 wks. ago' | '3 wks. ago';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 const chartConfig = {
   backgroundColor: "#ffffff",
@@ -38,6 +42,87 @@ const chartConfig = {
     stroke: "#e3e3e3",
   },
 };
+
+const LoadingWeightCard = () => (
+  <View style={styles.goalCard}>
+    <View>
+      <Text style={styles.label}>Goal Weight</Text>
+      <ShimmerPlaceholder style={styles.shimmerValue} width={100} height={32} />
+    </View>
+    <ShimmerPlaceholder style={styles.shimmerButton} width={80} height={36} />
+  </View>
+);
+
+const LoadingCurrentWeight = () => (
+  <View style={styles.currentWeight}>
+    <View style={styles.weightCard}>
+      <View style={styles.weightIconContainer}>
+        <View style={styles.weightIcon}>
+          <Text style={styles.weightIconText}>🏋️</Text>
+        </View>
+      </View>
+      <View style={styles.weightContent}>
+        <Text style={styles.label}>Current Weight</Text>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={120} height={32} />
+        <ShimmerPlaceholder style={styles.shimmerHint} width={250} height={16} />
+      </View>
+    </View>
+    <ShimmerPlaceholder style={styles.shimmerUpdateButton} width={'100%'} height={48} />
+  </View>
+);
+
+const LoadingProgressSection = () => (
+  <View style={styles.progressSection}>
+    <Text style={styles.label}>Goal Progress</Text>
+    <View style={styles.progressRow}>
+      <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
+      <ShimmerPlaceholder style={styles.shimmerStatus} width={120} height={20} />
+    </View>
+  </View>
+);
+
+const LoadingChartSection = () => (
+  <View style={styles.chartContainer}>
+    <ShimmerPlaceholder style={styles.shimmerChart} width={screenWidth - 80} height={220} />
+  </View>
+);
+
+const LoadingNutritionSection = () => (
+  <View>
+    <View style={styles.nutritionHeader}>
+      <Text style={styles.label}>Nutrition</Text>
+      <View style={styles.nutritionProgress}>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={60} height={20} />
+        <ShimmerPlaceholder style={styles.shimmerLabel} width={140} height={16} />
+      </View>
+    </View>
+
+    <View style={styles.macroDistribution}>
+      {Array(3).fill(0).map((_, index) => (
+        <View key={index} style={styles.macroItem}>
+          <ShimmerPlaceholder style={styles.shimmerPercentage} width={40} height={24} />
+          <ShimmerPlaceholder style={styles.shimmerLabel} width={60} height={16} />
+          <ShimmerPlaceholder style={styles.shimmerValue} width={40} height={14} />
+        </View>
+      ))}
+    </View>
+
+    <View style={styles.chartContainer}>
+      <ShimmerPlaceholder style={styles.shimmerChart} width={screenWidth - 80} height={220} />
+    </View>
+
+    <View style={styles.caloriesSummary}>
+      <View>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
+        <Text style={styles.label}>Total calories</Text>
+      </View>
+      <View>
+        <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
+        <Text style={styles.label}>Daily avg.</Text>
+      </View>
+    </View>
+  </View>
+);
 
 export default function AnalyticsScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('90 Days');
@@ -366,6 +451,34 @@ export default function AnalyticsScreen() {
 
   // Use userData instead of user from Redux
   const user = userData || {};
+
+  if (isLoading || isLoadingWeight || isLoadingMeals) {
+    return (
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || isLoading || isUpdating}
+            onRefresh={onRefresh}
+            tintColor="#000"
+          />
+        }
+      >
+        <Text h3 style={styles.title}>Analytics</Text>
+        
+        <Card containerStyle={styles.card}>
+          <LoadingWeightCard />
+          <LoadingCurrentWeight />
+          <LoadingProgressSection />
+          <LoadingChartSection />
+        </Card>
+
+        <Card containerStyle={styles.card}>
+          <LoadingNutritionSection />
+        </Card>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView 
@@ -875,5 +988,33 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     minHeight: 220,
+  },
+  shimmerValue: {
+    borderRadius: 4,
+    marginVertical: 4,
+  },
+  shimmerButton: {
+    borderRadius: 20,
+  },
+  shimmerHint: {
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  shimmerUpdateButton: {
+    borderRadius: 16,
+  },
+  shimmerChart: {
+    borderRadius: 8,
+  },
+  shimmerStatus: {
+    borderRadius: 4,
+  },
+  shimmerPercentage: {
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  shimmerLabel: {
+    borderRadius: 4,
+    marginVertical: 4,
   },
 });
