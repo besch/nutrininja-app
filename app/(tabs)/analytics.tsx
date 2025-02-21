@@ -22,13 +22,50 @@ type NutritionPeriod = 'This Week' | 'Last Week' | '2 wks. ago' | '3 wks. ago';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
+type TimePeriodSelectorProps<T extends string> = {
+  periods: T[];
+  selected: T;
+  onSelect: (period: T) => void;
+};
+
+const TimePeriodSelector = <T extends string>({ periods, selected, onSelect }: TimePeriodSelectorProps<T>) => (
+  <View style={styles.periodSelector}>
+    {periods.map((period) => (
+      <TouchableOpacity
+        key={period}
+        style={[
+          styles.periodButton,
+          selected === period && styles.selectedPeriod
+        ]}
+        onPress={() => onSelect(period)}
+      >
+        <Text style={[
+          styles.periodText,
+          selected === period && styles.selectedPeriodText
+        ]}>
+          {period}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
+
 const LoadingWeightCard = () => (
   <View style={styles.goalCard}>
     <View>
       <Text style={styles.label}>Goal Weight</Text>
-      <ShimmerPlaceholder style={styles.shimmerValue} width={100} height={32} />
+      <View style={{ height: 41 }}>
+        <ShimmerPlaceholder style={[styles.shimmerValue, { width: 120, height: 41 }]} />
+      </View>
     </View>
-    <ShimmerPlaceholder style={styles.shimmerButton} width={80} height={36} />
+    <Button
+      title="Update"
+      variant="primary"
+      style={styles.changeGoalButton}
+      textStyle={styles.changeGoalButtonText}
+      disabled={true}
+      onPress={() => {}}
+    />
   </View>
 );
 
@@ -42,11 +79,20 @@ const LoadingCurrentWeight = () => (
       </View>
       <View style={styles.weightContent}>
         <Text style={styles.label}>Current Weight</Text>
-        <ShimmerPlaceholder style={styles.shimmerValue} width={120} height={32} />
-        <ShimmerPlaceholder style={styles.shimmerHint} width={250} height={16} />
+        <View style={{ height: 41 }}>
+          <ShimmerPlaceholder style={[styles.shimmerValue, { width: 120, height: 41 }]} />
+        </View>
+        <Text style={styles.hint}>
+          Remember to update this at least once a week so we can adjust your plan to hit your goal
+        </Text>
       </View>
     </View>
-    <ShimmerPlaceholder style={styles.shimmerUpdateButton} width={'100%'} height={48} />
+    <TouchableOpacity 
+      style={[styles.updateWeightButton, { opacity: 0.5 }]}
+      disabled={true}
+    >
+      <Text style={styles.updateWeightButtonText}>Update your weight</Text>
+    </TouchableOpacity>
   </View>
 );
 
@@ -54,8 +100,12 @@ const LoadingProgressSection = () => (
   <View style={styles.progressSection}>
     <Text style={styles.label}>Goal Progress</Text>
     <View style={styles.progressRow}>
-      <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
-      <ShimmerPlaceholder style={styles.shimmerStatus} width={120} height={20} />
+      <View style={{ height: 34 }}>
+        <ShimmerPlaceholder style={[styles.shimmerValue, { width: 80, height: 34 }]} />
+      </View>
+      <View style={{ height: 20 }}>
+        <ShimmerPlaceholder style={[styles.shimmerStatus, { width: 120, height: 20 }]} />
+      </View>
     </View>
   </View>
 );
@@ -71,32 +121,50 @@ const LoadingNutritionSection = () => (
     <View style={styles.nutritionHeader}>
       <Text style={styles.label}>Nutrition</Text>
       <View style={styles.nutritionProgress}>
-        <ShimmerPlaceholder style={styles.shimmerValue} width={60} height={20} />
-        <ShimmerPlaceholder style={styles.shimmerLabel} width={140} height={16} />
+        <View style={{ height: 24 }}>
+          <ShimmerPlaceholder style={[styles.shimmerValue, { width: 60, height: 24 }]} />
+        </View>
+        <Text style={styles.progressLabel}>This week vs previous week</Text>
       </View>
     </View>
 
+    <TimePeriodSelector<NutritionPeriod>
+      periods={['This Week', 'Last Week', '2 wks. ago', '3 wks. ago']}
+      selected={'This Week'}
+      onSelect={() => {}}
+    />
+
     <View style={styles.macroDistribution}>
-      {Array(3).fill(0).map((_, index) => (
+      {['Protein', 'Carbs', 'Fats'].map((label, index) => (
         <View key={index} style={styles.macroItem}>
-          <ShimmerPlaceholder style={styles.shimmerPercentage} width={40} height={24} />
-          <ShimmerPlaceholder style={styles.shimmerLabel} width={60} height={16} />
-          <ShimmerPlaceholder style={styles.shimmerValue} width={40} height={14} />
+          <View style={{ height: 30 }}>
+            <ShimmerPlaceholder style={[styles.shimmerPercentage, { width: 40, height: 30 }]} />
+          </View>
+          <Text style={styles.macroLabel}>{label}</Text>
+          <View style={{ height: 18 }}>
+            <ShimmerPlaceholder style={[styles.shimmerValue, { width: 40, height: 18 }]} />
+          </View>
         </View>
       ))}
     </View>
 
     <View style={styles.chartContainer}>
-      <ShimmerPlaceholder style={styles.shimmerChart} width={screenWidth - 80} height={220} />
+      <View style={{ height: 220 }}>
+        <ShimmerPlaceholder style={[styles.shimmerChart, { width: screenWidth - 80, height: 220 }]} />
+      </View>
     </View>
 
     <View style={styles.caloriesSummary}>
       <View>
-        <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
+        <View style={{ height: 34 }}>
+          <ShimmerPlaceholder style={[styles.shimmerValue, { width: 80, height: 34 }]} />
+        </View>
         <Text style={styles.label}>Total calories</Text>
       </View>
       <View>
-        <ShimmerPlaceholder style={styles.shimmerValue} width={80} height={24} />
+        <View style={{ height: 34 }}>
+          <ShimmerPlaceholder style={[styles.shimmerValue, { width: 80, height: 34 }]} />
+        </View>
         <Text style={styles.label}>Daily avg.</Text>
       </View>
     </View>
@@ -319,32 +387,6 @@ export default function AnalyticsScreen() {
     return userData.weight > userData.target_weight ? 'Weight loss needed' : 'Weight gain needed';
   };
 
-  const TimePeriodSelector = ({ periods, selected, onSelect }: { 
-    periods: string[], 
-    selected: string,
-    onSelect: (period: any) => void 
-  }) => (
-    <View style={styles.periodSelector}>
-      {periods.map((period) => (
-        <TouchableOpacity
-          key={period}
-          style={[
-            styles.periodButton,
-            selected === period && styles.selectedPeriod
-          ]}
-          onPress={() => onSelect(period)}
-        >
-          <Text style={[
-            styles.periodText,
-            selected === period && styles.selectedPeriodText
-          ]}>
-            {period}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
   const handleWeightGoalUpdate = async (newGoal: number) => {
     setIsUpdating(true);
     try {
@@ -449,7 +491,14 @@ export default function AnalyticsScreen() {
           <LoadingWeightCard />
           <LoadingCurrentWeight />
           <LoadingProgressSection />
-          <LoadingChartSection />
+          <TimePeriodSelector<TimePeriod>
+            periods={['90 Days', '6 Months', '1 Year', 'All time']}
+            selected={'90 Days'}
+            onSelect={() => {}}
+          />
+          <View style={styles.chartContainer}>
+            <ShimmerPlaceholder style={[styles.shimmerChart, { width: screenWidth - 80, height: 220 }]} />
+          </View>
         </Card>
 
         <Card containerStyle={styles.card}>
@@ -522,7 +571,7 @@ export default function AnalyticsScreen() {
           </View>
         </View>
 
-        <TimePeriodSelector
+        <TimePeriodSelector<TimePeriod>
           periods={['90 Days', '6 Months', '1 Year', 'All time']}
           selected={selectedPeriod}
           onSelect={setSelectedPeriod}
@@ -585,7 +634,7 @@ export default function AnalyticsScreen() {
           </View>
         </View>
 
-        <TimePeriodSelector
+        <TimePeriodSelector<NutritionPeriod>
           periods={['This Week', 'Last Week', '2 wks. ago', '3 wks. ago']}
           selected={selectedNutritionPeriod}
           onSelect={setSelectedNutritionPeriod}
@@ -970,7 +1019,6 @@ const styles = StyleSheet.create({
   },
   shimmerValue: {
     borderRadius: 4,
-    marginVertical: 4,
   },
   shimmerButton: {
     borderRadius: 20,
@@ -990,7 +1038,6 @@ const styles = StyleSheet.create({
   },
   shimmerPercentage: {
     borderRadius: 4,
-    marginBottom: 4,
   },
   shimmerLabel: {
     borderRadius: 4,
