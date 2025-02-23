@@ -15,13 +15,11 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCameraPermissions } from "expo-camera";
 import { useSelectedDate } from '@/store/userSlice';
-import { supabase } from "@/utils/supabase";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
 import type { Meal } from "@/types";
 import LoadingSpinner from "./ui/LoadingSpinner";
 import { api } from "@/utils/api";
+import { SavedFoods } from "./SavedFoods";
 
 interface AddFoodOverlayProps {
   visible: boolean;
@@ -258,7 +256,7 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
                 </TouchableOpacity>
                 <Text style={styles.savedFoodsTitle}>Saved Foods</Text>
               </View>
-              <SavedFoodsGrid
+              <SavedFoods
                 onClose={onClose}
                 selectedDate={selectedDate.format('YYYY-MM-DD')}
               />
