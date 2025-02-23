@@ -31,7 +31,7 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = (screenWidth - 48 - (GRID_COLUMNS - 1) * 8) / GRID_COLUMNS;
+  const itemSize = (screenWidth - 74 - (GRID_COLUMNS - 1) * 8) / GRID_COLUMNS;
 
   const { data: savedMeals, isLoading } = useQuery({
     queryKey: ['bookmarked-meals'],
