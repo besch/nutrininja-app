@@ -6,19 +6,12 @@ import {
   Pressable,
   TouchableOpacity,
   Animated,
-  Image,
-  FlatList,
-  Dimensions,
 } from "react-native";
 import { Text } from "@rneui/themed";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCameraPermissions } from "expo-camera";
 import { useSelectedDate } from '@/store/userSlice';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Meal } from "@/types";
-import LoadingSpinner from "./ui/LoadingSpinner";
-import { api } from "@/utils/api";
 import { SavedFoods } from "./SavedFoods";
 
 interface AddFoodOverlayProps {
@@ -35,7 +28,7 @@ const menuOptions = [
   {
     id: "saved",
     title: "Saved foods",
-    icon: <Feather name="bookmark" size={24} color="#000" />,
+    icon: <FontAwesome name="bookmark" size={24} color="#000" />,
   },
   {
     id: "barcode",
@@ -52,110 +45,6 @@ const menuOptions = [
 interface SavedFoodsGridProps {
   onClose: () => void;
   selectedDate: string;
-}
-
-interface SavedMealResponse {
-  meal_id: string;
-  meals: {
-    id: string;
-    name: string;
-    image_url: string;
-    calories: number;
-    proteins: number;
-    carbs: number;
-    fats: number;
-    created_at: string;
-  };
-}
-
-type DatabaseMeal = {
-  id: string;
-  name: string;
-  image_url: string;
-  calories: number;
-  proteins: number;
-  carbs: number;
-  fats: number;
-  created_at: string;
-};
-
-type DatabaseSavedMeal = {
-  meal_id: string;
-  meals: DatabaseMeal;
-};
-
-function SavedFoodsGrid({ onClose, selectedDate }: SavedFoodsGridProps) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const numColumns = 3;
-  const screenWidth = Dimensions.get('window').width;
-  const itemSize = (screenWidth - 48 - (numColumns - 1) * 8) / numColumns;
-
-  const { data: savedMeals, isLoading } = useQuery({
-    queryKey: ['bookmarked-meals'],
-    queryFn: () => api.meals.getBookmarkedMeals(),
-  });
-
-  const cloneMealMutation = useMutation({
-    mutationFn: async (originalMeal: Meal) => {
-      return api.meals.cloneMeal(originalMeal.id, selectedDate);
-    },
-    onSuccess: (newMeal) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['meals', selectedDate] });
-      queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['progress', selectedDate] });
-      
-      // Navigate to the new meal
-      onClose();
-      router.push({
-        pathname: "/main/food-details",
-        params: { id: newMeal.id }
-      });
-    },
-  });
-
-  const handleMealSelect = (meal: Meal) => {
-    cloneMealMutation.mutate(meal);
-  };
-
-  if (isLoading || cloneMealMutation.isPending) {
-    return (
-      <View style={styles.loadingContainer}>
-        <LoadingSpinner />
-      </View>
-    );
-  }
-
-  if (!savedMeals?.length) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Feather name="bookmark" size={48} color="#666" />
-        <Text style={styles.emptyText}>No saved meals yet</Text>
-      </View>
-    );
-  }
-
-  return (
-    <FlatList
-      data={savedMeals}
-      numColumns={numColumns}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.gridContainer}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={[styles.gridItem, { width: itemSize, height: itemSize }]}
-          onPress={() => handleMealSelect(item)}
-        >
-          <Image
-            source={{ uri: item.image_url }}
-            style={styles.gridImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      )}
-    />
-  );
 }
 
 export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
@@ -180,6 +69,7 @@ export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
         tension: 85,
         friction: 9,
       }).start();
+      setShowSavedFoods(false);
     }
   }, [visible]);
 
@@ -332,37 +222,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
     textAlign: "center",
-  },
-  gridContainer: {
-    padding: 16,
-    gap: 8,
-  },
-  gridItem: {
-    marginRight: 8,
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  gridImage: {
-    width: '100%',
-    height: '100%',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 12,
   },
   savedFoodsHeader: {
     flexDirection: 'row',
