@@ -3,6 +3,7 @@ import { View, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl }
 import { Text } from "@rneui/themed";
 import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
 import BaseOverlay from "@/components/overlays/BaseOverlay";
@@ -10,11 +11,11 @@ import AnalysisResultsOverlay from "@/components/overlays/AnalysisResultsOverlay
 import { api } from "@/utils/api";
 import moment from "moment";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
 import { updateMealInStore } from "@/store/mealsSlice";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Meal } from "@/types";
+import type { Meal, User } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
@@ -37,6 +38,8 @@ export default function FoodDetailsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const hasLoadedImageRef = useRef<{[key: string]: boolean}>({});
+  const [isSaved, setIsSaved] = useState(false);
+  const { id: userId } = useSelector((state: RootState) => state.user);
 
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
@@ -131,6 +134,21 @@ export default function FoodDetailsScreen() {
     },
   });
 
+  const { data: isBookmarked = false } = useQuery({
+    queryKey: ['meal-bookmarked', id],
+    queryFn: () => api.meals.isBookmarked(id),
+    enabled: !!id,
+  });
+
+  const toggleBookmarkMutation = useMutation({
+    mutationFn: () => api.meals.toggleBookmark(id),
+    onSuccess: (isBookmarked) => {
+      queryClient.setQueryData(['meal-bookmarked', id], isBookmarked);
+      // Also invalidate the bookmarked meals list if it exists
+      queryClient.invalidateQueries({ queryKey: ['bookmarked-meals'] });
+    },
+  });
+
   // Handle navigation events to cancel analysis if user leaves
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
@@ -202,10 +220,160 @@ export default function FoodDetailsScreen() {
     setRefreshing(false);
   }, [queryClient, id]);
 
-  if (isLoading || !meal) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
-        <LoadingSpinner />
+        <StatusBar style="light" />
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+        >
+          <View style={styles.headerContainer}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.headerButton}
+              >
+                <Feather name="arrow-left" size={24} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                disabled={true}
+              >
+                <Feather name="trash-2" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.imageContainer}>
+              <ShimmerPlaceholder
+                style={[styles.foodImage, { borderRadius: 0 }]}
+                width={'100%'}
+                height={'100%'}
+              />
+            </View>
+          </View>
+
+          <View style={styles.content}>
+            <View style={styles.topRow}>
+              <View style={styles.titleContainer}>
+                <ShimmerPlaceholder
+                  style={styles.shimmerName}
+                  width={200}
+                  height={28}
+                />
+              </View>
+              <View style={styles.topRowRight}>
+                <View style={styles.bookmarkButton}>
+                  <FontAwesome
+                    name="bookmark-o"
+                    size={20}
+                    color="#666"
+                  />
+                </View>
+                <View style={[styles.timeContainer, { backgroundColor: 'transparent' }]}>
+                  <ShimmerPlaceholder
+                    style={{
+                      width: 80,
+                      height: 20,
+                      borderRadius: 12,
+                    }}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.macroGrid}>
+              {/* Calories */}
+              <View style={styles.macroCard}>
+                <View style={styles.macroIconContainer}>
+                  <Feather name="activity" size={20} color="black" />
+                </View>
+                <View style={styles.macroContent}>
+                  <Text style={styles.macroLabel}>Calories</Text>
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                </View>
+                <View style={[styles.editButton, styles.disabledButton]}>
+                  <Feather name="edit-2" size={16} color="white" />
+                </View>
+              </View>
+
+              {/* Carbs */}
+              <View style={styles.macroCard}>
+                <View style={styles.macroIconContainer}>
+                  <Feather name="box" size={20} color="#FFB84D" />
+                </View>
+                <View style={styles.macroContent}>
+                  <Text style={styles.macroLabel}>Carbs</Text>
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                </View>
+                <View style={[styles.editButton, styles.disabledButton]}>
+                  <Feather name="edit-2" size={16} color="white" />
+                </View>
+              </View>
+
+              {/* Protein */}
+              <View style={styles.macroCard}>
+                <View style={styles.macroIconContainer}>
+                  <Feather name="zap" size={20} color="#FF6B6B" />
+                </View>
+                <View style={styles.macroContent}>
+                  <Text style={styles.macroLabel}>Protein</Text>
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                </View>
+                <View style={[styles.editButton, styles.disabledButton]}>
+                  <Feather name="edit-2" size={16} color="white" />
+                </View>
+              </View>
+
+              {/* Fats */}
+              <View style={styles.macroCard}>
+                <View style={styles.macroIconContainer}>
+                  <Feather name="droplet" size={20} color="#4DABF7" />
+                </View>
+                <View style={styles.macroContent}>
+                  <Text style={styles.macroLabel}>Fats</Text>
+                  <ShimmerPlaceholder
+                    style={styles.shimmerMacro}
+                    width={60}
+                    height={24}
+                  />
+                </View>
+                <View style={[styles.editButton, styles.disabledButton]}>
+                  <Feather name="edit-2" size={16} color="white" />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.bottomButtons}>
+              <View style={[styles.fixButton, styles.disabledButton]}>
+                <View style={styles.fixButtonContent}>
+                  <Feather name="cpu" size={20} color="#999" />
+                  <Text style={[styles.fixButtonText, styles.disabledText]}>
+                    Fix Results
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.doneButton}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -234,7 +402,12 @@ export default function FoodDetailsScreen() {
         <View style={styles.headerContainer}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerLeft} />
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.headerButton}
+            >
+              <Feather name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowDeleteConfirm(true)}
               style={styles.headerButton}
@@ -252,7 +425,6 @@ export default function FoodDetailsScreen() {
               }}
               style={styles.foodImage}
               onLoadStart={() => {
-                // Only show loading state if image hasn't been loaded before
                 if (!hasLoadedImageRef.current[meal.image_url]) {
                   setIsImageLoading(true);
                 }
@@ -303,7 +475,22 @@ export default function FoodDetailsScreen() {
                 </TouchableOpacity>
               )}
             </View>
-            <Text style={styles.timestamp}>{moment(meal.created_at).format("hh:mm A")}</Text>
+            <View style={styles.topRowRight}>
+              <TouchableOpacity
+                style={styles.bookmarkButton}
+                onPress={() => toggleBookmarkMutation.mutate()}
+                disabled={toggleBookmarkMutation.isPending}
+              >
+                <FontAwesome
+                  name={isBookmarked ? "bookmark" : "bookmark-o"}
+                  size={20}
+                  color={isBookmarked ? "#000" : "#666"}
+                />
+              </TouchableOpacity>
+              <Text style={styles.timestamp}>
+                {moment(meal.created_at).format("hh:mm A")}
+              </Text>
+            </View>
           </View>
 
           <View style={[styles.macroGrid, (isAnalyzing || analysisFailed) && styles.disabledContent]}>
@@ -414,14 +601,29 @@ export default function FoodDetailsScreen() {
 
           {/* Bottom Buttons */}
           <View style={styles.bottomButtons}>
-            <Button 
-              title="Fix Results"
-              onPress={handleFixResults}
-              loading={analyzeMealMutation.isPending}
-              disabled={isAnalyzing || analyzeMealMutation.isPending}
+            <TouchableOpacity 
               style={[styles.fixButton, isAnalyzing && styles.disabledButton]}
-              textStyle={[styles.fixButtonText, isAnalyzing && styles.disabledText]}
-            />
+              onPress={handleFixResults}
+              disabled={isAnalyzing || analyzeMealMutation.isPending}
+            >
+              {analyzeMealMutation.isPending ? (
+                <LoadingSpinner />
+              ) : (
+                <View style={styles.fixButtonContent}>
+                  <Feather 
+                    name="cpu" 
+                    size={20} 
+                    color={isAnalyzing ? "#999" : "#000"} 
+                  />
+                  <Text style={[
+                    styles.fixButtonText, 
+                    isAnalyzing && styles.disabledText
+                  ]}>
+                    Fix Results
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
             <TouchableOpacity 
               style={styles.doneButton}
               onPress={() => router.back()}
@@ -500,13 +702,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1,
-    paddingTop: 34,
+    paddingTop: 60,
     paddingHorizontal: 16,
     paddingBottom: 16,
-  },
-  headerLeft: {
-    width: 40,
-    height: 40,
   },
   headerButton: {
     width: 40,
@@ -541,6 +739,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    marginTop: -16,
   },
   contentContainer: {
     flexGrow: 1,
@@ -554,6 +756,11 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
     marginRight: 12,
+  },
+  topRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   timestamp: {
     fontSize: 13,
@@ -762,5 +969,22 @@ const styles = StyleSheet.create({
   shimmerMacro: {
     borderRadius: 6,
     marginTop: 2,
+  },
+  bookmarkButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F8F8F8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fixButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  timeContainer: {
+    padding: 4,
+    borderRadius: 12,
   },
 });

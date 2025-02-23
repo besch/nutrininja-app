@@ -167,6 +167,27 @@ export const api = {
       return fetchApi(`/api/meals/${mealId}/analyze`, {
         method: "POST"
       });
+    },
+
+    toggleBookmark: async (mealId: string) => {
+      return fetchApi(`/api/meals/${mealId}/bookmark`, {
+        method: "POST"
+      });
+    },
+
+    isBookmarked: async (mealId: string) => {
+      return fetchApi(`/api/meals/${mealId}/bookmark`);
+    },
+
+    getBookmarkedMeals: async () => {
+      return fetchApi('/api/meals/bookmarks');
+    },
+
+    cloneMeal: async (mealId: string, date: string) => {
+      return fetchApi(`/api/meals/${mealId}/clone`, {
+        method: "POST",
+        body: JSON.stringify({ date })
+      });
     }
   },
 

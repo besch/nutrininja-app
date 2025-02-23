@@ -33,6 +33,7 @@ const MealItem: React.FC<{
         <TouchableOpacity
           style={styles.foodItemContent}
           onPress={onPress}
+          activeOpacity={0.7}
         >
           <Image
             source={{ uri: meal.image_url }}
@@ -88,10 +89,20 @@ const MealItem: React.FC<{
                 ellipsizeMode="tail"
               >{meal.name}</Text>
             )}
-            <View style={styles.timeContainer}>
-              <Text style={styles.foodTime}>
-                {moment(meal.created_at).format("hh:mm A")}
-              </Text>
+            <View style={[styles.timeContainer, isPending && { backgroundColor: 'transparent' }]}>
+              {isPending ? (
+                <ShimmerPlaceholder
+                  style={{
+                    width: 70,
+                    height: 18,
+                    borderRadius: 12,
+                  }}
+                />
+              ) : (
+                <Text style={styles.foodTime}>
+                  {moment(meal.created_at).format("hh:mm A")}
+                </Text>
+              )}
             </View>
           </View>
           
