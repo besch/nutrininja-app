@@ -6,6 +6,7 @@ import {
   Image,
   FlatList,
   Dimensions,
+  Pressable,
 } from "react-native";
 import { Text } from "@rneui/themed";
 import { Feather } from "@expo/vector-icons";
@@ -91,10 +92,10 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
 
   if (!savedMeals?.length && !isLoading && !cloneMealMutation.isPending) {
     return (
-      <View style={styles.emptyContainer}>
+      <Pressable style={styles.emptyContainer} onPress={(e) => e.stopPropagation()}>
         <Feather name="bookmark" size={48} color="#666" />
         <Text style={styles.emptyText}>No saved meals yet</Text>
-      </View>
+      </Pressable>
     );
   }
 
@@ -129,18 +130,20 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
   };
 
   return (
-    <FlatList
-      data={gridData}
-      numColumns={GRID_COLUMNS}
-      keyExtractor={(item, index) => item?.id || `empty-${index}`}
-      contentContainerStyle={[
-        styles.gridContainer,
-        gridData.length <= INITIAL_PLACEHOLDER_COUNT && styles.gridContainerFixed
-      ]}
-      renderItem={renderItem}
-      scrollEnabled={gridData.length > INITIAL_PLACEHOLDER_COUNT}
-      showsVerticalScrollIndicator={false}
-    />
+    <Pressable onPress={(e) => e.stopPropagation()}>
+      <FlatList
+        data={gridData}
+        numColumns={GRID_COLUMNS}
+        keyExtractor={(item, index) => item?.id || `empty-${index}`}
+        contentContainerStyle={[
+          styles.gridContainer,
+          gridData.length <= INITIAL_PLACEHOLDER_COUNT && styles.gridContainerFixed
+        ]}
+        renderItem={renderItem}
+        scrollEnabled={gridData.length > INITIAL_PLACEHOLDER_COUNT}
+        showsVerticalScrollIndicator={false}
+      />
+    </Pressable>
   );
 }
 
