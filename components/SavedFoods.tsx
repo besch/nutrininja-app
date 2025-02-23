@@ -49,14 +49,12 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
       queryClient.invalidateQueries({ queryKey: ['progress', selectedDate] });
       
       onClose();
-      router.push({
-        pathname: "/main/food-details",
-        params: { id: newMeal.id }
-      });
+      router.replace("/");
     },
   });
 
   const handleMealSelect = (meal: Meal) => {
+    onClose();
     cloneMealMutation.mutate(meal);
   };
 
