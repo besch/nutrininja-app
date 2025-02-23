@@ -40,6 +40,7 @@
     "expo-constants": "~17.0.4",
     "expo-crypto": "~14.0.2",
     "expo-dev-client": "~5.0.9",
+    "expo-device": "~7.0.2",
     "expo-font": "~13.0.3",
     "expo-haptics": "~14.0.1",
     "expo-image-manipulator": "~13.0.6",
@@ -69,6 +70,7 @@
     "react-native-gesture-handler": "~2.20.2",
     "react-native-get-random-values": "^1.11.0",
     "react-native-gifted-charts": "^1.4.54",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-paper": "^5.13.0",
     "react-native-progress": "^5.0.1",
     "react-native-purchases": "^8.5.1",
@@ -85,8 +87,7 @@
     "react-redux": "^9.2.0",
     "uuid": "^11.0.5",
     "write-file-atomic": "^6.0.0",
-    "yup": "^1.6.1",
-    "expo-device": "~7.0.2"
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

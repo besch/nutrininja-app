@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -12,20 +12,26 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Meal } from "@/types";
-import LoadingSpinner from "./ui/LoadingSpinner";
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from "@/utils/api";
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 interface SavedFoodsProps {
   onClose: () => void;
   selectedDate: string;
 }
 
+const GRID_COLUMNS = 3;
+const INITIAL_GRID_ROWS = 3;
+const INITIAL_PLACEHOLDER_COUNT = GRID_COLUMNS * INITIAL_GRID_ROWS;
+
 export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const numColumns = 3;
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = (screenWidth - 48 - (numColumns - 1) * 8) / numColumns;
+  const itemSize = (screenWidth - 48 - (GRID_COLUMNS - 1) * 8) / GRID_COLUMNS;
 
   const { data: savedMeals, isLoading } = useQuery({
     queryKey: ['bookmarked-meals'],
@@ -53,15 +59,37 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
     cloneMealMutation.mutate(meal);
   };
 
-  if (isLoading || cloneMealMutation.isPending) {
-    return (
-      <View style={styles.loadingContainer}>
-        <LoadingSpinner />
-      </View>
-    );
-  }
+  const gridData = useMemo(() => {
+    if (isLoading || cloneMealMutation.isPending) {
+      return Array(INITIAL_PLACEHOLDER_COUNT).fill(null);
+    }
 
-  if (!savedMeals?.length) {
+    if (!savedMeals?.length) {
+      return [];
+    }
+
+    // If we have less than initial grid size, pad with nulls to maintain layout
+    if (savedMeals.length <= INITIAL_PLACEHOLDER_COUNT) {
+      const filledData = [...savedMeals];
+      const remainingSpaces = INITIAL_PLACEHOLDER_COUNT - savedMeals.length;
+      if (remainingSpaces > 0) {
+        filledData.push(...Array(remainingSpaces).fill(null));
+      }
+      return filledData;
+    }
+
+    // If we have more items, make sure the last row is complete
+    const totalItems = savedMeals.length;
+    const remainder = totalItems % GRID_COLUMNS;
+    if (remainder > 0) {
+      const padding = GRID_COLUMNS - remainder;
+      return [...savedMeals, ...Array(padding).fill(null)];
+    }
+
+    return savedMeals;
+  }, [savedMeals, isLoading, cloneMealMutation.isPending]);
+
+  if (!savedMeals?.length && !isLoading && !cloneMealMutation.isPending) {
     return (
       <View style={styles.emptyContainer}>
         <Feather name="bookmark" size={48} color="#666" />
@@ -70,24 +98,48 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
     );
   }
 
+  const renderItem = ({ item, index }: { item: Meal | null; index: number }) => {
+    if (isLoading || cloneMealMutation.isPending) {
+      return (
+        <View style={[styles.gridItem, { width: itemSize, height: itemSize }]}>
+          <ShimmerPlaceholder
+            style={styles.gridImage}
+            shimmerStyle={styles.gridImage}
+          />
+        </View>
+      );
+    }
+
+    if (!item) {
+      return <View style={[styles.gridItem, { width: itemSize, height: itemSize }]} />;
+    }
+
+    return (
+      <TouchableOpacity
+        style={[styles.gridItem, { width: itemSize, height: itemSize }]}
+        onPress={() => handleMealSelect(item)}
+      >
+        <Image
+          source={{ uri: item.image_url }}
+          style={styles.gridImage}
+          resizeMode="cover"
+        />
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <FlatList
-      data={savedMeals}
-      numColumns={numColumns}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.gridContainer}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={[styles.gridItem, { width: itemSize, height: itemSize }]}
-          onPress={() => handleMealSelect(item)}
-        >
-          <Image
-            source={{ uri: item.image_url }}
-            style={styles.gridImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      )}
+      data={gridData}
+      numColumns={GRID_COLUMNS}
+      keyExtractor={(item, index) => item?.id || `empty-${index}`}
+      contentContainerStyle={[
+        styles.gridContainer,
+        gridData.length <= INITIAL_PLACEHOLDER_COUNT && styles.gridContainerFixed
+      ]}
+      renderItem={renderItem}
+      scrollEnabled={gridData.length > INITIAL_PLACEHOLDER_COUNT}
+      showsVerticalScrollIndicator={false}
     />
   );
 }
@@ -96,6 +148,9 @@ const styles = StyleSheet.create({
   gridContainer: {
     padding: 16,
     gap: 8,
+  },
+  gridContainerFixed: {
+    flexGrow: 0,
   },
   gridItem: {
     marginRight: 8,
@@ -106,12 +161,7 @@ const styles = StyleSheet.create({
   gridImage: {
     width: '100%',
     height: '100%',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    borderRadius: 8,
   },
   emptyContainer: {
     flex: 1,
