@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   menuContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "transparent",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 24,
