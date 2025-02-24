@@ -1,23 +1,21 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@rneui/themed';
 import { Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { Meal } from '@/types';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
-interface MacroData {
-  remaining: number;
-  total: number;
-}
-
 interface MacrosSummaryProps {
   isLoading: boolean;
-  proteins?: MacroData;
-  carbs?: MacroData;
-  fats?: MacroData;
+  meals: Meal[];
+  burnedCalories: number;
+  proteinGoal?: number;
+  carbsGoal?: number;
+  fatsGoal?: number;
 }
 
 const LoadingMacroCard: React.FC = () => (
@@ -101,15 +99,57 @@ const MacroCard: React.FC<{
 
 export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
   isLoading,
-  proteins = { remaining: 0, total: 0 },
-  carbs = { remaining: 0, total: 0 },
-  fats = { remaining: 0, total: 0 },
+  meals,
+  burnedCalories = 0,
+  proteinGoal = 0,
+  carbsGoal = 0,
+  fatsGoal = 0,
 }) => {
+  const { proteins, carbs, fats } = useMemo(() => {
+    // Calculate total macros from completed meals
+    const totals = meals
+      .filter(meal => meal.analysis_status === 'completed')
+      .reduce((acc, meal) => ({
+        proteins: acc.proteins + meal.proteins,
+        carbs: acc.carbs + meal.carbs,
+        fats: acc.fats + meal.fats,
+      }), {
+        proteins: 0,
+        carbs: 0,
+        fats: 0,
+      });
+    
+    // Calculate burned macros based on proportions
+    const totalMacros = totals.proteins + totals.carbs + totals.fats;
+    const proteinRatio = totalMacros > 0 ? totals.proteins / totalMacros : 0.3;
+    const carbsRatio = totalMacros > 0 ? totals.carbs / totalMacros : 0.5;
+    const fatsRatio = totalMacros > 0 ? totals.fats / totalMacros : 0.2;
+
+    const burnedProteins = Math.round(burnedCalories * proteinRatio * 0.25); // 1g protein = 4 calories
+    const burnedCarbs = Math.round(burnedCalories * carbsRatio * 0.25); // 1g carbs = 4 calories
+    const burnedFats = Math.round(burnedCalories * fatsRatio * 0.11); // 1g fat = 9 calories
+    
+    return {
+      proteins: {
+        total: totals.proteins,
+        remaining: proteinGoal - totals.proteins + burnedProteins
+      },
+      carbs: {
+        total: totals.carbs,
+        remaining: carbsGoal - totals.carbs + burnedCarbs
+      },
+      fats: {
+        total: totals.fats,
+        remaining: fatsGoal - totals.fats + burnedFats
+      }
+    };
+  }, [meals, burnedCalories, proteinGoal, carbsGoal, fatsGoal]);
+
   // Show shimmer when loading or when all values are in initial state (0)
   const isInitialState = !isLoading && 
-    proteins.remaining === 0 && proteins.total === 0 &&
-    carbs.remaining === 0 && carbs.total === 0 &&
-    fats.remaining === 0 && fats.total === 0;
+    proteins.remaining === proteinGoal && proteins.total === 0 &&
+    carbs.remaining === carbsGoal && carbs.total === 0 &&
+    fats.remaining === fatsGoal && fats.total === 0;
   const shouldShowShimmer = isLoading || isInitialState;
 
   if (shouldShowShimmer) {

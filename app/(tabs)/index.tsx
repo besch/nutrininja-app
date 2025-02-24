@@ -40,79 +40,59 @@ export default function HomeScreen() {
     gcTime: 30 * 60 * 1000,
   });
 
-  const calculateDailyTotals = useCallback((mealsData: Meal[]) => {
-    return mealsData
-      .filter(meal => meal.analysis_status === 'completed')
-      .reduce((acc, meal) => ({
-        calories: acc.calories + meal.calories,
-        proteins: acc.proteins + meal.proteins,
-        carbs: acc.carbs + meal.carbs,
-        fats: acc.fats + meal.fats,
-      }), {
-        calories: 0,
-        proteins: 0,
-        carbs: 0,
-        fats: 0,
-      });
-  }, []);
+  const { data: activitiesData = [], isLoading: activitiesLoading } = useQuery({
+    queryKey: ['activities', dateStr],
+    queryFn: () => api.activities.getActivities(dateStr),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
-  const dailyTotals = useMemo(() => calculateDailyTotals(meals), [meals, calculateDailyTotals]);
+  const burnedCalories = useMemo(() => {
+    return activitiesData.reduce((total: number, activity: { calories_burned: number }) => 
+      total + (activity.calories_burned || 0), 0);
+  }, [activitiesData]);
 
-  const { data: progressData } = useQuery({
-    queryKey: ['progress', dateStr, dailyTotals],
+  const { data: progressData, isLoading: progressLoading } = useQuery({
+    queryKey: ['progress', dateStr],
     queryFn: async () => {
       const progressResponse = await api.user.getDailyProgress(dateStr);
       if (!progressResponse || !progressResponse.goals) {
         throw new Error('Invalid progress response');
       }
-
       return progressResponse;
     },
-    enabled: !mealsLoading,
     staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000
+    gcTime: 30 * 60 * 1000,
   });
 
   const summaryProps = useMemo(() => ({
-    isLoading: mealsLoading,
-    remainingCalories: progressData?.progress?.remainingCalories,
-    totalCalories: progressData?.progress?.totalCalories,
-    burnedCalories: progressData?.progress?.burnedCalories,
+    isLoading: mealsLoading || activitiesLoading,
+    meals,
+    burnedCalories,
+    dailyCalorieGoal: progressData?.goals?.dailyCalorieGoal,
   }), [
     mealsLoading,
-    progressData?.progress?.remainingCalories,
-    progressData?.progress?.totalCalories,
-    progressData?.progress?.burnedCalories,
+    activitiesLoading,
+    meals,
+    burnedCalories,
+    progressData?.goals?.dailyCalorieGoal,
   ]);
 
   const macroProps = useMemo(() => ({
-    isLoading: mealsLoading,
-    proteins: {
-      remaining: progressData?.progress?.remainingProteins || 0,
-      total: progressData?.progress?.totalProteins || 0,
-      burned: progressData?.progress?.burnedProteins || 0,
-    },
-    carbs: {
-      remaining: progressData?.progress?.remainingCarbs || 0,
-      total: progressData?.progress?.totalCarbs || 0,
-      burned: progressData?.progress?.burnedCarbs || 0,
-    },
-    fats: {
-      remaining: progressData?.progress?.remainingFats || 0,
-      total: progressData?.progress?.totalFats || 0,
-      burned: progressData?.progress?.burnedFats || 0,
-    }
+    isLoading: mealsLoading || activitiesLoading,
+    meals,
+    burnedCalories,
+    proteinGoal: progressData?.goals?.proteinGoal,
+    carbsGoal: progressData?.goals?.carbsGoal,
+    fatsGoal: progressData?.goals?.fatsGoal,
   }), [
     mealsLoading,
-    progressData?.progress?.remainingProteins,
-    progressData?.progress?.totalProteins,
-    progressData?.progress?.burnedProteins,
-    progressData?.progress?.remainingCarbs,
-    progressData?.progress?.totalCarbs,
-    progressData?.progress?.burnedCarbs,
-    progressData?.progress?.remainingFats,
-    progressData?.progress?.totalFats,
-    progressData?.progress?.burnedFats,
+    activitiesLoading,
+    meals,
+    burnedCalories,
+    progressData?.goals?.proteinGoal,
+    progressData?.goals?.carbsGoal,
+    progressData?.goals?.fatsGoal,
   ]);
 
   const handleDateSelected = useCallback((date: Moment) => {
@@ -131,8 +111,9 @@ export default function HomeScreen() {
     setRefreshing(true);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['meals', dateStr] }),
+      queryClient.invalidateQueries({ queryKey: ['activities', dateStr] }),
       queryClient.invalidateQueries({ queryKey: ['weight', dateStr] }),
-      queryClient.invalidateQueries({ queryKey: ['progress'] }),
+      queryClient.invalidateQueries({ queryKey: ['progress', dateStr] }),
     ]);
     setRefreshing(false);
   }, [queryClient, dateStr]);
@@ -155,6 +136,11 @@ export default function HomeScreen() {
       }
     }
   }, [meals, mealsLoading]);
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['activities', dateStr] });
+    queryClient.invalidateQueries({ queryKey: ['progress', dateStr] });
+  }, [dateStr, queryClient]);
 
   return (
     <ScrollView 

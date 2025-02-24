@@ -1,38 +1,48 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Text } from '@rneui/themed';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
 import { useRouter } from 'expo-router';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { Meal } from '@/types';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 interface CaloriesSummaryProps {
   isLoading: boolean;
-  remainingCalories?: number;
-  totalCalories?: number;
-  burnedCalories?: number;
+  meals: Meal[];
+  burnedCalories: number;
+  dailyCalorieGoal?: number;
 }
 
 export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   isLoading,
-  remainingCalories = 0,
-  totalCalories = 0,
+  meals,
   burnedCalories = 0,
+  dailyCalorieGoal = 2000,
 }) => {
   const router = useRouter();
   const pulseAnim = new Animated.Value(0);
 
-  // Show shimmer when loading or when all values are in initial state (0)
-  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === 0 && burnedCalories === 0;
+  const { totalCalories, remainingCalories } = useMemo(() => {
+    const total = meals
+      .filter(meal => meal.analysis_status === 'completed')
+      .reduce((acc, meal) => acc + meal.calories, 0);
+    
+    return {
+      totalCalories: total,
+      remainingCalories: dailyCalorieGoal - total + burnedCalories
+    };
+  }, [meals, dailyCalorieGoal, burnedCalories]);
+
+  // Show shimmer when loading or when all values are in initial state
+  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === dailyCalorieGoal && burnedCalories === 0;
   const shouldShowShimmer = isLoading || isInitialState;
 
-  // Calculate consumed calories and progress
-  const initialCalories = totalCalories + remainingCalories; // This is what user started with
-  const consumedCalories = initialCalories - remainingCalories; // How much they've consumed
-  const progressValue = initialCalories > 0 ? consumedCalories / initialCalories : 0;
+  // Calculate progress
+  const progressValue = dailyCalorieGoal > 0 ? totalCalories / dailyCalorieGoal : 0;
 
   const progressAnim = useRef(new Animated.Value(0)).current;
 
@@ -101,7 +111,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
               />
               <View style={styles.circleIcon}>
                 <ShimmerPlaceholder
-                  style={{ width: 24, height: 24, borderRadius: 12 }}
+                  style={{ width: 28, height: 28, borderRadius: 14 }}
                 />
               </View>
             </View>
@@ -157,7 +167,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
             {remainingCalories < 0 ? (
               <Progress.Circle
                 size={60}
-                progress={Math.min(1, Math.abs(remainingCalories) / initialCalories)}
+                progress={Math.min(1, Math.abs(remainingCalories) / dailyCalorieGoal)}
                 thickness={7}
                 color="#FF6B6B"
                 unfilledColor="#000"
@@ -178,7 +188,16 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
               />
             )}
             <View style={styles.circleIcon}>
-              <Feather name="activity" size={24} color={remainingCalories < 0 ? "#FF6B6B" : "#000"} />
+              <Ionicons 
+                name="flame-outline" 
+                size={20} 
+                color="#FFF" 
+                style={{ 
+                  backgroundColor: remainingCalories < 0 ? "#FF6B6B" : "#000", 
+                  padding: 4, 
+                  borderRadius: 14 
+                }} 
+              />
             </View>
           </View>
         </View>

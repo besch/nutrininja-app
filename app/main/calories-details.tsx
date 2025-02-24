@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import { useRouter } from 'expo-router';
@@ -8,7 +8,7 @@ import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/utils/api';
 import ActivityIcon from '@/components/ActivityIcon';
-import { ACTIVITY_CATEGORIES, ActivityType, ActivityCategory, IconNames } from '@/types';
+import { ACTIVITY_CATEGORIES, ActivityType, ActivityCategory, IconNames, Meal } from '@/types';
 import { useSelectedDate } from '@/store/userSlice';
 import BaseOverlay from '@/components/overlays/BaseOverlay';
 
@@ -21,30 +21,6 @@ interface Activity {
   calories_burned: number;
 }
 
-interface DailyProgressResponse {
-  streak: number;
-  goals: {
-    dailyCalorieGoal: number;
-    proteinGoal: number;
-    carbsGoal: number;
-    fatsGoal: number;
-  };
-  progress: {
-    remainingCalories: number;
-    remainingProteins: number;
-    remainingCarbs: number;
-    remainingFats: number;
-    totalCalories: number;
-    totalProteins: number;
-    totalCarbs: number;
-    totalFats: number;
-    burnedCalories: number;
-    burnedProteins: number;
-    burnedCarbs: number;
-    burnedFats: number;
-  };
-}
-
 export default function CaloriesDetailsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -55,12 +31,12 @@ export default function CaloriesDetailsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: progressData, isLoading } = useQuery<DailyProgressResponse>({
-    queryKey: ['progress', dateStr],
-    queryFn: () => api.user.getDailyProgress(dateStr)
+  const { data: meals = [], isLoading: mealsLoading } = useQuery({
+    queryKey: ['meals', dateStr],
+    queryFn: () => api.meals.getMealsByDate(dateStr),
   });
 
-  const { data: activitiesData } = useQuery<Activity[]>({
+  const { data: activitiesData = [], isLoading: activitiesLoading } = useQuery<Activity[]>({
     queryKey: ['activities', dateStr],
     queryFn: async () => {
       const response = await api.activities.getActivities(dateStr);
@@ -68,12 +44,37 @@ export default function CaloriesDetailsScreen() {
     }
   });
 
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ['user-goals'],
+    queryFn: () => api.user.getProfile(),
+  });
+
+  const isLoading = mealsLoading || activitiesLoading || userLoading;
+
+  const { totalCalories, burnedCalories, remainingCalories } = useMemo(() => {
+    const total = meals
+      .filter((meal: Meal) => meal.analysis_status === 'completed')
+      .reduce((acc: number, meal: Meal) => acc + meal.calories, 0);
+    
+    const burned = activitiesData.reduce((acc: number, activity: Activity) => 
+      acc + activity.calories_burned, 0);
+    
+    const dailyGoal = userData?.daily_calorie_goal || 2000;
+    
+    return {
+      totalCalories: total,
+      burnedCalories: burned,
+      remainingCalories: dailyGoal - total + burned
+    };
+  }, [meals, activitiesData, userData]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['meals', dateStr] }),
         queryClient.invalidateQueries({ queryKey: ['activities', dateStr] }),
-        queryClient.invalidateQueries({ queryKey: ['progress', dateStr] }),
+        queryClient.invalidateQueries({ queryKey: ['user-goals'] }),
         queryClient.invalidateQueries({ queryKey: ['meals-summary'] })
       ]);
     } finally {
@@ -104,7 +105,7 @@ export default function CaloriesDetailsScreen() {
       await api.activities.deleteActivity(selectedActivity.id);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['activities', dateStr] }),
-        queryClient.invalidateQueries({ queryKey: ['progress', dateStr] })
+        queryClient.invalidateQueries({ queryKey: ['meals-summary'] })
       ]);
       setIsDeleteModalVisible(false);
       setSelectedActivity(null);
@@ -195,23 +196,7 @@ export default function CaloriesDetailsScreen() {
     );
   }
 
-  const { goals, progress } = progressData || { 
-    goals: { dailyCalorieGoal: 0, proteinGoal: 0, carbsGoal: 0, fatsGoal: 0 },
-    progress: {
-      remainingCalories: 0,
-      totalCalories: 0,
-      burnedCalories: 0,
-      remainingProteins: 0,
-      remainingCarbs: 0,
-      remainingFats: 0,
-      totalProteins: 0,
-      totalCarbs: 0,
-      totalFats: 0,
-      burnedProteins: 0,
-      burnedCarbs: 0,
-      burnedFats: 0
-    }
-  };
+  const dailyCalorieGoal = userData?.daily_calorie_goal || 2000;
 
   return (
     <View style={styles.container}>
@@ -236,26 +221,26 @@ export default function CaloriesDetailsScreen() {
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <Text style={styles.summaryLabel}>Daily Goal</Text>
-              <Text style={styles.summaryValue}>{goals.dailyCalorieGoal}</Text>
+              <Text style={styles.summaryValue}>{dailyCalorieGoal}</Text>
             </View>
             <View style={styles.summaryItem}>
               <Text style={styles.summaryLabel}>Consumed</Text>
-              <Text style={styles.summaryValue}>{progress.totalCalories}</Text>
+              <Text style={styles.summaryValue}>{totalCalories}</Text>
             </View>
             <View style={styles.summaryItem}>
               <Text style={styles.summaryLabel}>Burned</Text>
-              <Text style={[styles.summaryValue, styles.burnedValue]}>{progress.burnedCalories}</Text>
+              <Text style={[styles.summaryValue, styles.burnedValue]}>{burnedCalories}</Text>
             </View>
           </View>
           <View style={styles.remainingContainer}>
             <Text style={styles.remainingLabel}>
-              {progress.remainingCalories >= 0 ? 'Remaining' : 'Over by'}
+              {remainingCalories >= 0 ? 'Remaining' : 'Over by'}
             </Text>
             <Text style={[
               styles.remainingValue,
-              progress.remainingCalories < 0 && styles.negativeValue
+              remainingCalories < 0 && styles.negativeValue
             ]}>
-              {Math.abs(progress.remainingCalories)}
+              {Math.abs(remainingCalories)}
             </Text>
           </View>
         </View>

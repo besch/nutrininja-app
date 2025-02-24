@@ -118,7 +118,7 @@ const MealItem: React.FC<{
           ) : (
             <View style={styles.macroRows}>
               <View style={styles.calorieRow}>
-                <Feather name="activity" size={16} color="#000" />
+                <Ionicons name="flame-outline" size={16} color="#000" />
                 <Text style={styles.macroText}>{meal.calories} calories</Text>
               </View>
               <View style={styles.macroRow}>

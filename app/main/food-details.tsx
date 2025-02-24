@@ -11,6 +11,7 @@ import AnalysisResultsOverlay from "@/components/overlays/AnalysisResultsOverlay
 import { api } from "@/utils/api";
 import moment from "moment";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { LoadingDots } from "@/components/ui/LoadingDots";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { updateMealInStore } from "@/store/mealsSlice";
@@ -20,6 +21,10 @@ import { Button } from "@/components/ui/Button";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
+import ActivityIcon from "@/components/ActivityIcon";
+import { ACTIVITY_CATEGORIES, ActivityType, ActivityCategory, IconNames } from "@/types";
+import { useSelectedDate } from "@/store/userSlice";
+import { Ionicons } from "@expo/vector-icons";
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
@@ -304,7 +309,7 @@ export default function FoodDetailsScreen() {
               {/* Carbs */}
               <View style={styles.macroCard}>
                 <View style={styles.macroIconContainer}>
-                  <Feather name="box" size={20} color="#FFB84D" />
+                  <Ionicons name="leaf-outline" size={20} color="#FF9500" />
                 </View>
                 <View style={styles.macroContent}>
                   <Text style={styles.macroLabel}>Carbs</Text>
@@ -322,7 +327,7 @@ export default function FoodDetailsScreen() {
               {/* Protein */}
               <View style={styles.macroCard}>
                 <View style={styles.macroIconContainer}>
-                  <Feather name="zap" size={20} color="#FF6B6B" />
+                  <Ionicons name="flash-outline" size={20} color="#FF3B30" />
                 </View>
                 <View style={styles.macroContent}>
                   <Text style={styles.macroLabel}>Protein</Text>
@@ -340,7 +345,7 @@ export default function FoodDetailsScreen() {
               {/* Fats */}
               <View style={styles.macroCard}>
                 <View style={styles.macroIconContainer}>
-                  <Feather name="droplet" size={20} color="#4DABF7" />
+                  <Ionicons name="water-outline" size={20} color="#007AFF" />
                 </View>
                 <View style={styles.macroContent}>
                   <Text style={styles.macroLabel}>Fats</Text>
@@ -497,7 +502,7 @@ export default function FoodDetailsScreen() {
             {/* Calories */}
             <View style={styles.macroCard}>
               <View style={styles.macroIconContainer}>
-                <Feather name="activity" size={20} color="black" />
+                <Ionicons name="flame-outline" size={20} color="black" />
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Calories</Text>
@@ -523,7 +528,7 @@ export default function FoodDetailsScreen() {
             {/* Carbs */}
             <View style={styles.macroCard}>
               <View style={styles.macroIconContainer}>
-                <Feather name="box" size={20} color="#FFB84D" />
+                <Ionicons name="leaf-outline" size={20} color="#FF9500" />
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Carbs</Text>
@@ -549,7 +554,7 @@ export default function FoodDetailsScreen() {
             {/* Protein */}
             <View style={styles.macroCard}>
               <View style={styles.macroIconContainer}>
-                <Feather name="zap" size={20} color="#FF6B6B" />
+                <Ionicons name="flash-outline" size={20} color="#FF3B30" />
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Protein</Text>
@@ -575,7 +580,7 @@ export default function FoodDetailsScreen() {
             {/* Fats */}
             <View style={styles.macroCard}>
               <View style={styles.macroIconContainer}>
-                <Feather name="droplet" size={20} color="#4DABF7" />
+                <Ionicons name="water-outline" size={20} color="#007AFF" />
               </View>
               <View style={styles.macroContent}>
                 <Text style={styles.macroLabel}>Fats</Text>
@@ -607,7 +612,9 @@ export default function FoodDetailsScreen() {
               disabled={isAnalyzing || analyzeMealMutation.isPending}
             >
               {analyzeMealMutation.isPending ? (
-                <LoadingSpinner />
+                <View style={styles.fixButtonContent}>
+                  <LoadingDots color="#000" size={5} />
+                </View>
               ) : (
                 <View style={styles.fixButtonContent}>
                   <Feather 
