@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { Text } from '@rneui/themed';
 import { useRouter } from 'expo-router';
-import { ACTIVITY_CATEGORIES, ActivityType } from '@/types';
+import { ACTIVITY_CATEGORIES, ActivityType, IconNames } from '@/types';
 import { Feather } from '@expo/vector-icons';
 import { useSelectedDate } from '@/store/userSlice';
 import ActivityIcon from '@/components/ActivityIcon';
@@ -11,63 +11,124 @@ export default function ActivitySelectionScreen() {
   const router = useRouter();
   const selectedDate = useSelectedDate();
 
-  const handleActivitySelect = (activity: ActivityType) => {
-    router.push({
-      pathname: '/main/activity-details',
-      params: {
-        activityId: activity.id,
-        selectedDate: selectedDate.format('YYYY-MM-DD'),
-      },
-    });
+  // Define the three main exercise types to display
+  const exerciseTypes = [
+    {
+      id: 'running',
+      name: 'Run',
+      icon: IconNames.run,
+      description: 'Running, jogging, sprinting, etc.',
+      category: 'cardio'
+    },
+    {
+      id: 'weight_training',
+      name: 'Weight lifting',
+      icon: IconNames.weightlifting,
+      description: 'Machines, free weights, etc.',
+      category: 'gym'
+    },
+    {
+      id: 'custom',
+      name: 'Describe',
+      icon: IconNames.fitness,
+      description: 'Write your workout in text',
+      category: 'custom'
+    }
+  ];
+
+  const handleActivitySelect = (exerciseType: any) => {
+    // Find the actual activity from ACTIVITY_CATEGORIES
+    let activity: ActivityType | null = null;
+    
+    if (exerciseType.id === 'custom') {
+      // Handle custom workout description
+      router.push({
+        pathname: '/main/activity-details',
+        params: {
+          activityId: 'custom',
+          selectedDate: selectedDate.format('YYYY-MM-DD'),
+        },
+      });
+      return;
+    }
+    
+    // Find the activity in the categories
+    for (const category of ACTIVITY_CATEGORIES) {
+      const found = category.activities.find(a => a.id === exerciseType.id);
+      if (found) {
+        activity = found;
+        break;
+      }
+    }
+    
+    if (activity) {
+      router.push({
+        pathname: '/main/activity-details',
+        params: {
+          activityId: activity.id,
+          selectedDate: selectedDate.format('YYYY-MM-DD'),
+        },
+      });
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <Feather name="arrow-left" size={24} color="black" />
-      </TouchableOpacity>
-      <Text style={styles.title}>Select Activity</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Exercise</Text>
 
-      <ScrollView style={styles.content}>
-        {ACTIVITY_CATEGORIES.map((category) => (
-          <View key={category.id} style={styles.categoryContainer}>
-            <View style={styles.categoryHeader}>
-              <ActivityIcon name={category.icon} size={24} color="#666" />
-              <Text style={styles.categoryTitle}>{category.name}</Text>
-            </View>
-            <View style={styles.activitiesGrid}>
-              {category.activities.map((activity) => (
-                <TouchableOpacity
-                  key={activity.id}
-                  style={styles.activityCard}
-                  onPress={() => handleActivitySelect(activity)}
-                >
-                  <View style={styles.iconContainer}>
-                    <ActivityIcon 
-                      name={activity.icon} 
-                      size={24} 
-                      color="#333"
-                    />
-                  </View>
-                  <Text style={styles.activityName}>{activity.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+        <View style={styles.content}>
+          <Text style={styles.sectionTitle}>Log Exercise</Text>
+          
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {exerciseTypes.map((exerciseType) => (
+              <TouchableOpacity
+                key={exerciseType.id}
+                style={styles.activityCard}
+                onPress={() => handleActivitySelect(exerciseType)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconContainer}>
+                  <ActivityIcon 
+                    name={exerciseType.icon} 
+                    size={28} 
+                    color="#333"
+                  />
+                </View>
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityName}>{exerciseType.name}</Text>
+                  <Text style={styles.activityDescription}>
+                    {exerciseType.description}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#999" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
   backButton: {
     position: 'absolute',
-    top: 60,
+    top: 20,
     left: 20,
     width: 40,
     height: 40,
@@ -81,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     position: 'absolute',
-    top: 70,
+    top: 30,
     left: 0,
     right: 0,
     textAlign: 'center',
@@ -89,47 +150,55 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginTop: 120,
+    marginTop: 80,
+    paddingHorizontal: 20,
   },
-  categoryContainer: {
-    marginBottom: 24,
-    padding: 16,
+  scrollContent: {
+    paddingBottom: 30,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: 12,
-  },
-  activitiesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
   activityCard: {
-    width: '45%',
-    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f5f5f5',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  activityInfo: {
+    flex: 1,
   },
   activityName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#000',
+  },
+  activityDescription: {
     fontSize: 14,
-    textAlign: 'center',
+    color: '#666',
   },
 }); 

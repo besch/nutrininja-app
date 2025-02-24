@@ -1,27 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { Text, Button } from '@rneui/themed';
+import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView } from 'react-native';
+import { Text } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { ACTIVITY_CATEGORIES, ActivityType, calculateCaloriesBurned } from '@/types';
 import { api } from '@/utils/api';
-import { useUser } from '@/store/userSlice';
-import { useDispatch } from 'react-redux';
+import { useUser, selectIsMetric } from '@/store/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserData } from '@/store/userSlice';
 import { AppDispatch } from '@/store';
 import ActivityIcon from '@/components/ActivityIcon';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
+import { Slider } from "react-native-awesome-slider";
+import { useSharedValue } from "react-native-reanimated";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
   const { activityId, selectedDate } = useLocalSearchParams<{ activityId: string; selectedDate: string }>();
-  const [duration, setDuration] = useState('30');
+  const [duration, setDuration] = useState('15');
   const [calories, setCalories] = useState('0');
   const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
+  const isMetric = useSelector(selectIsMetric);
+  
+  // Intensity slider values
+  const [intensity, setIntensity] = useState('medium');
+  const progress = useSharedValue(1); // Default to medium (middle position)
+  const min = useSharedValue(0);
+  const max = useSharedValue(2);
+  
+  // Duration options
+  const durationOptions = [
+    { value: '15', label: '15 mins' },
+    { value: '30', label: '30 mins' },
+    { value: '60', label: '60 mins' },
+    { value: '90', label: '90 mins' },
+  ];
 
   // Fetch user data when component mounts
   useEffect(() => {
@@ -33,22 +51,45 @@ export default function ActivityDetailsScreen() {
     return category.activities.find(a => a.id === activityId) || null;
   }, null);
 
-  const calculateAndSetCalories = (durationValue: number) => {
+  const calculateAndSetCalories = (durationValue: number, intensityLevel: string) => {
     if (activity && user?.weight) {
-      const calculated = calculateCaloriesBurned(user.weight, durationValue, activity.met);
-      setCalories(calculated.toString());
+      // Apply intensity multiplier
+      const intensityMultiplier = 
+        intensityLevel === 'low' ? 0.7 : 
+        intensityLevel === 'high' ? 1.3 : 
+        1.0; // medium
+      
+      const calculated = calculateCaloriesBurned(
+        user.weight, 
+        durationValue, 
+        activity.met * intensityMultiplier
+      );
+      
+      setCalories(Math.round(calculated).toString());
     }
   };
 
   const handleDurationChange = (value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    setDuration(numericValue);
-    calculateAndSetCalories(Number(numericValue) || 0);
+    setDuration(value);
+    calculateAndSetCalories(Number(value) || 0, intensity);
   };
 
-  const handleCaloriesChange = (value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    setCalories(numericValue);
+  const handleIntensityChange = (value: number) => {
+    // Snap to exact values: 0, 1, or 2
+    let snappedValue = Math.round(value);
+    
+    // Ensure it's one of our three values
+    if (snappedValue < 0) snappedValue = 0;
+    if (snappedValue > 2) snappedValue = 2;
+    
+    // Set the intensity based on the snapped value
+    const intensityLevel = snappedValue === 0 ? 'low' : snappedValue === 1 ? 'medium' : 'high';
+    
+    // Update the progress value to the snapped value for visual feedback
+    progress.value = snappedValue;
+    
+    setIntensity(intensityLevel);
+    calculateAndSetCalories(Number(duration), intensityLevel);
   };
 
   const handleSave = async () => {
@@ -62,6 +103,7 @@ export default function ActivityDetailsScreen() {
         calories_burned: Number(calories),
         duration_minutes: Number(duration),
         activity_date: selectedDate,
+        intensity: intensity,
       });
 
       // Invalidate relevant queries to refresh the data
@@ -83,7 +125,7 @@ export default function ActivityDetailsScreen() {
   // Calculate initial calories whenever user data or activity changes
   useEffect(() => {
     if (user?.weight && activity) {
-      calculateAndSetCalories(Number(duration));
+      calculateAndSetCalories(Number(duration), intensity);
     }
   }, [user?.weight, activity]);
 
@@ -97,141 +139,349 @@ export default function ActivityDetailsScreen() {
 
   const isValid = Number(duration) > 0 && Number(calories) > 0;
 
+  // Get intensity description based on activity type and user's unit preference
+  const getIntensityDescription = (intensityLevel: string) => {
+    if (activity.id === 'running' || activity.id.includes('run')) {
+      return intensityLevel === 'high' 
+        ? `Sprinting - ${isMetric ? '22 km/h' : '14 mph'} (4 minute ${isMetric ? 'km' : 'miles'})` 
+        : intensityLevel === 'medium' 
+        ? `Jogging - ${isMetric ? '10 km/h' : '6 mph'} (10 minute ${isMetric ? 'km' : 'miles'})` 
+        : `Chill walk - ${isMetric ? '5 km/h' : '3 mph'} (20 minute ${isMetric ? 'km' : 'miles'})`;
+    } else if (activity.id.includes('weight') || activity.id.includes('gym')) {
+      return intensityLevel === 'high' 
+        ? 'Heavy weights, low reps' 
+        : intensityLevel === 'medium' 
+        ? 'Moderate weights, medium reps' 
+        : 'Light weights, high reps';
+    } else {
+      return intensityLevel === 'high' 
+        ? 'High intensity' 
+        : intensityLevel === 'medium' 
+        ? 'Medium intensity' 
+        : 'Low intensity';
+    }
+  };
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Feather name="arrow-left" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.title}>{activity.name}</Text>
-        </View>
+    <View style={styles.container}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Feather name="arrow-left" size={24} color="black" />
+      </TouchableOpacity>
+      
+      <View style={styles.header}>
+        <ActivityIcon name={activity.icon} size={24} color="#000" />
+        <Text style={styles.title}>{activity.name}</Text>
+      </View>
 
-        <View style={styles.content}>
-          <View style={styles.iconContainer}>
-            <ActivityIcon name={activity.icon} size={48} color="#333" />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Feather name="sun" size={24} color="#000" />
+            <Text style={styles.sectionTitle}>Set intensity</Text>
           </View>
-
-          <View style={styles.inputContainer}>
+          
+          <View style={styles.intensityContainer}>
+            <View style={styles.sliderContainer}>
+              <View style={styles.intensityLabelsContainer}>
+                <View style={styles.intensityLabelContainer}>
+                  <Text style={[styles.intensityLabel, intensity === 'high' ? styles.activeIntensity : {}]}>
+                    High
+                  </Text>
+                  <Text style={[styles.intensityDescription, intensity === 'high' ? styles.activeDescription : {}]}>
+                    {getIntensityDescription('high')}
+                  </Text>
+                </View>
+                
+                <View style={styles.intensityLabelContainer}>
+                  <Text style={[styles.intensityLabel, intensity === 'medium' ? styles.activeIntensity : {}]}>
+                    Medium
+                  </Text>
+                  <Text style={[styles.intensityDescription, intensity === 'medium' ? styles.activeDescription : {}]}>
+                    {getIntensityDescription('medium')}
+                  </Text>
+                </View>
+                
+                <View style={styles.intensityLabelContainer}>
+                  <Text style={[styles.intensityLabel, intensity === 'low' ? styles.activeIntensity : {}]}>
+                    Low
+                  </Text>
+                  <Text style={[styles.intensityDescription, intensity === 'low' ? styles.activeDescription : {}]}>
+                    {getIntensityDescription('low')}
+                  </Text>
+                </View>
+              </View>
+              
+              <GestureHandlerRootView style={styles.sliderWrapper}>
+                <Slider
+                  progress={progress}
+                  minimumValue={min}
+                  maximumValue={max}
+                  onValueChange={handleIntensityChange}
+                  renderBubble={() => null}
+                  renderThumb={() => (
+                    <View style={styles.customThumb} />
+                  )}
+                  theme={{
+                    minimumTrackTintColor: "#000000",
+                    maximumTrackTintColor: "#EEEEEE",
+                    bubbleBackgroundColor: "#FFFFFF",
+                    bubbleTextColor: "#000000"
+                  }}
+                  style={styles.slider}
+                />
+              </GestureHandlerRootView>
+            </View>
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Feather name="clock" size={24} color="#000" />
             <Text style={styles.sectionTitle}>Duration</Text>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={duration}
-                onChangeText={handleDurationChange}
-                keyboardType="number-pad"
-                maxLength={3}
-                placeholder="0"
-                returnKeyType="done"
-                onSubmitEditing={Keyboard.dismiss}
-              />
-              <Text style={styles.inputUnit}>min</Text>
-            </View>
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.sectionTitle}>Calories Burned</Text>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={calories}
-                onChangeText={handleCaloriesChange}
-                keyboardType="number-pad"
-                maxLength={4}
-                placeholder="0"
-                returnKeyType="done"
-                onSubmitEditing={Keyboard.dismiss}
-              />
-              <Text style={styles.inputUnit}>kcal</Text>
-            </View>
+          
+          <View style={styles.durationContainer}>
+            {durationOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.durationButton,
+                  duration === option.value && styles.durationButtonActive
+                ]}
+                onPress={() => handleDurationChange(option.value)}
+              >
+                <Text style={[
+                  styles.durationButtonText,
+                  duration === option.value && styles.durationButtonTextActive
+                ]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-
-          <Button
-            title="Save Activity"
-            onPress={handleSave}
-            loading={isLoading}
-            buttonStyle={[styles.saveButton, !isValid && styles.saveButtonDisabled]}
-            disabled={!isValid || isLoading}
-          />
+          
+          <View style={styles.customDurationContainer}>
+            <Text style={styles.customDurationLabel}>Custom duration (minutes)</Text>
+            <TextInput
+              style={styles.customDurationInput}
+              value={duration}
+              onChangeText={(text) => {
+                const numericValue = text.replace(/[^0-9]/g, '');
+                handleDurationChange(numericValue);
+              }}
+              keyboardType="number-pad"
+              placeholder="Enter minutes"
+              maxLength={3}
+            />
+          </View>
+          
+          <View style={styles.caloriesContainer}>
+            <Text style={styles.caloriesLabel}>Estimated calories burned</Text>
+            <Text style={styles.caloriesValue}>{calories} kcal</Text>
+          </View>
         </View>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+      </ScrollView>
+      
+      <TouchableOpacity
+        style={[styles.addButton, !isValid && styles.addButtonDisabled]}
+        onPress={handleSave}
+        disabled={!isValid || isLoading}
+      >
+        <Text style={styles.addButtonText}>
+          {isLoading ? 'Saving...' : 'Add'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
+
+const { height, width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  backButton: {
-    marginRight: 16,
+    justifyContent: 'center',
+    marginTop: 60,
+    paddingVertical: 10,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+    marginLeft: 10,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: 20,
+    marginTop: 20,
   },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginBottom: 32,
+  section: {
+    marginBottom: 30,
   },
-  inputContainer: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  inputWrapper: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
+    marginBottom: 20,
   },
-  input: {
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  intensityContainer: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 20,
+  },
+  sliderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sliderWrapper: {
+    width: 60,
+    height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  slider: {
+    width: 180,
+    height: 60,
+    transform: [{ rotate: '270deg' }],
+  },
+  intensityLabelsContainer: {
     flex: 1,
-    fontSize: 20,
+    justifyContent: 'space-between',
+    height: 180,
+    paddingVertical: 10,
+  },
+  intensityLabelContainer: {
+    marginBottom: 10,
+  },
+  intensityLabel: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#000',
-    padding: 0,
-  },
-  inputUnit: {
-    fontSize: 16,
+    marginBottom: 5,
     color: '#666',
-    marginLeft: 8,
   },
-  saveButton: {
+  intensityDescription: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 5,
+  },
+  activeIntensity: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  activeDescription: {
+    color: '#666',
+  },
+  customThumb: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 3,
+    borderColor: "#000000",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  durationButton: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 10,
+    width: '48%',
+  },
+  durationButtonActive: {
     backgroundColor: '#000',
-    borderRadius: 12,
-    height: 56,
-    marginTop: 'auto',
+    borderColor: '#000',
   },
-  saveButtonDisabled: {
+  durationButtonText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  durationButtonTextActive: {
+    color: '#fff',
+  },
+  customDurationContainer: {
+    marginBottom: 20,
+  },
+  customDurationLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 10,
+    color: '#333',
+  },
+  customDurationInput: {
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#f8f8f8',
+  },
+  caloriesContainer: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 10,
+  },
+  caloriesLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 8,
+  },
+  caloriesValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  addButton: {
+    backgroundColor: '#000',
+    borderRadius: 30,
+    padding: 15,
+    margin: 20,
+    alignItems: 'center',
+  },
+  addButtonDisabled: {
     backgroundColor: '#ccc',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 }); 

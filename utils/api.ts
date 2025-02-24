@@ -229,6 +229,7 @@ export const api = {
       calories_burned: number;
       duration_minutes: number;
       activity_date: string;
+      intensity?: string;
     }) => {
       return fetchApi('/api/activities', {
         method: 'POST',

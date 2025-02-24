@@ -103,6 +103,7 @@ export interface Activity {
   duration_minutes: number;
   activity_date: string;
   created_at: string;
+  intensity?: string;
 }
 
 export enum IconNames {
