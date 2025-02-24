@@ -40,13 +40,6 @@ export default function HomeScreen() {
     gcTime: 30 * 60 * 1000,
   });
 
-  const { data: weightData } = useQuery({
-    queryKey: ['weight', dateStr],
-    queryFn: () => api.weight.getByDate(dateStr),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000
-  });
-
   const calculateDailyTotals = useCallback((mealsData: Meal[]) => {
     return mealsData
       .filter(meal => meal.analysis_status === 'completed')
