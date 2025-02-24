@@ -224,6 +224,13 @@ export const api = {
       return fetchApi(url);
     },
 
+    analyzeActivityDescription: async (description: string) => {
+      return fetchApi('/api/activities/analyze', {
+        method: 'POST',
+        body: JSON.stringify({ description }),
+      });
+    },
+
     logActivity: async (data: {
       activity_type: string;
       calories_burned: number;

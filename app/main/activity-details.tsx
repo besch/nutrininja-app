@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
 import { Text } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -24,6 +24,14 @@ export default function ActivityDetailsScreen() {
   const [duration, setDuration] = useState('15');
   const [calories, setCalories] = useState('0');
   const [isLoading, setIsLoading] = useState(false);
+  const [description, setDescription] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<null | { 
+    activityType: string;
+    durationMinutes: number;
+    intensity: string;
+    caloriesBurned: number;
+  }>(null);
   const user = useUser();
   const isMetric = useSelector(selectIsMetric);
   
@@ -46,10 +54,17 @@ export default function ActivityDetailsScreen() {
     dispatch(fetchUserData());
   }, [dispatch]);
 
-  const activity = ACTIVITY_CATEGORIES.reduce((found: ActivityType | null, category) => {
-    if (found) return found;
-    return category.activities.find(a => a.id === activityId) || null;
-  }, null);
+  const activity = activityId === 'custom' 
+    ? { 
+        id: 'custom', 
+        name: 'Describe Exercise', 
+        icon: 'fitness', 
+        met: 5 // Default MET value
+      } as ActivityType 
+    : ACTIVITY_CATEGORIES.reduce((found: ActivityType | null, category) => {
+        if (found) return found;
+        return category.activities.find(a => a.id === activityId) || null;
+      }, null);
 
   const calculateAndSetCalories = (durationValue: number, intensityLevel: string) => {
     if (activity && user?.weight) {
@@ -92,6 +107,42 @@ export default function ActivityDetailsScreen() {
     calculateAndSetCalories(Number(duration), intensityLevel);
   };
 
+  const analyzeDescription = async () => {
+    if (!description.trim() || !user?.weight) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const result = await api.activities.analyzeActivityDescription(description);
+      
+      if (result) {
+        setAiResult(result);
+        
+        // Update form with AI results
+        if (result.durationMinutes) {
+          setDuration(result.durationMinutes.toString());
+        }
+        
+        if (result.intensity) {
+          const intensityValue = 
+            result.intensity === 'low' ? 0 : 
+            result.intensity === 'high' ? 2 : 1;
+          
+          progress.value = intensityValue;
+          setIntensity(result.intensity);
+        }
+        
+        if (result.caloriesBurned) {
+          setCalories(Math.round(result.caloriesBurned).toString());
+        }
+      }
+    } catch (error) {
+      console.error('Failed to analyze activity description:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!activity || !user) return;
     
@@ -99,7 +150,7 @@ export default function ActivityDetailsScreen() {
     setIsLoading(true);
     try {
       await api.activities.logActivity({
-        activity_type: activity.id,
+        activity_type: activityId === 'custom' && aiResult?.activityType ? aiResult.activityType : activity.id,
         calories_burned: Number(calories),
         duration_minutes: Number(duration),
         activity_date: selectedDate,
@@ -162,6 +213,87 @@ export default function ActivityDetailsScreen() {
     }
   };
 
+  // Render custom activity description input for 'custom' activity type
+  if (activityId === 'custom') {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color="black" />
+        </TouchableOpacity>
+        
+        <Text style={styles.title}>Describe Exercise</Text>
+        
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.descriptionContainer}>
+            <TextInput
+              style={styles.descriptionInput}
+              placeholder="Describe workout time, intensity, etc."
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              autoFocus
+            />
+            
+            <TouchableOpacity 
+              style={[
+                styles.aiButton, 
+                !description.trim() && styles.aiButtonDisabled
+              ]}
+              onPress={analyzeDescription}
+              disabled={!description.trim() || isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Feather name="star" size={18} color="#fff" style={styles.aiButtonIcon} />
+                  <Text style={styles.aiButtonText}>Created by AI</Text>
+                </>
+              )}
+            </TouchableOpacity>
+            
+            {aiResult && (
+              <View style={styles.aiResultContainer}>
+                <Text style={styles.aiResultTitle}>AI Analysis</Text>
+                <Text style={styles.aiResultText}>
+                  Activity: {aiResult.activityType}
+                </Text>
+                <Text style={styles.aiResultText}>
+                  Duration: {aiResult.durationMinutes} minutes
+                </Text>
+                <Text style={styles.aiResultText}>
+                  Intensity: {aiResult.intensity}
+                </Text>
+                <Text style={styles.aiResultText}>
+                  Calories: {Math.round(aiResult.caloriesBurned)} kcal
+                </Text>
+              </View>
+            )}
+            
+            <View style={styles.exampleContainer}>
+              <Text style={styles.exampleTitle}>Example:</Text>
+              <Text style={styles.exampleText}>
+                Hiked a steep trail for 1 hour, lungs and legs burned
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+        
+        <TouchableOpacity
+          style={[styles.addButton, (!isValid || !description.trim()) && styles.addButtonDisabled]}
+          onPress={handleSave}
+          disabled={!isValid || !description.trim() || isLoading}
+        >
+          <Text style={styles.addButtonText}>
+            {isLoading ? 'Saving...' : 'Add Exercise'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Regular activity details screen
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -324,7 +456,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginLeft: 10,
+    textAlign: 'center',
+    marginTop: 60,
   },
   content: {
     flex: 1,
@@ -483,5 +616,74 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  // Custom activity description styles
+  descriptionContainer: {
+    marginTop: 20,
+  },
+  descriptionInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  aiButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    alignSelf: 'flex-start',
+  },
+  aiButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  aiButtonIcon: {
+    marginRight: 8,
+  },
+  aiButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  exampleContainer: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+  },
+  exampleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  exampleText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  aiResultContainer: {
+    backgroundColor: '#f0f8ff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#d0e1f9',
+  },
+  aiResultTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
+  },
+  aiResultText: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333',
   },
 }); 
