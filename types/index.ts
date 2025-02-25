@@ -149,7 +149,7 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
     name: 'Cardio',
     icon: IconNames.run,
     activities: [
-      { id: 'running', name: 'Running', icon: IconNames.run, caloriesPerHour: 800, met: 8.3 },
+      { id: 'running', name: 'Run', icon: IconNames.run, caloriesPerHour: 800, met: 8.3 },
       { id: 'cycling', name: 'Cycling', icon: IconNames.bike, caloriesPerHour: 600, met: 7.5 },
       { id: 'swimming', name: 'Swimming', icon: IconNames.swim, caloriesPerHour: 700, met: 7.0 },
       { id: 'stairs', name: 'Stairs', icon: IconNames.stairs, caloriesPerHour: 450, met: 4.0 },

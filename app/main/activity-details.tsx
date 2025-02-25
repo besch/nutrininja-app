@@ -15,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Slider } from "react-native-awesome-slider";
 import { useSharedValue } from "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
@@ -217,11 +218,16 @@ export default function ActivityDetailsScreen() {
   if (activityId === 'custom') {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="black" />
-        </TouchableOpacity>
-        
-        <Text style={styles.title}>Describe Exercise</Text>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Feather name="arrow-left" size={24} color="black" />
+          </TouchableOpacity>
+          
+          <View style={styles.header}>
+            <MaterialIcons name="question-mark" size={24} color="black" />
+            <Text style={styles.headerTitle}>Describe Exercise</Text>
+          </View>
+        </View>
         
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.descriptionContainer}>
@@ -296,13 +302,15 @@ export default function ActivityDetailsScreen() {
   // Regular activity details screen
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <Feather name="arrow-left" size={24} color="black" />
-      </TouchableOpacity>
-      
-      <View style={styles.header}>
-        <ActivityIcon name={activity.icon} size={24} color="#000" />
-        <Text style={styles.title}>{activity.name}</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color="black" />
+        </TouchableOpacity>
+        
+        <View style={styles.header}>
+          <ActivityIcon name={activity.icon} size={24} color="#000" />
+          <Text style={styles.headerTitle}>{activity.name}</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -434,24 +442,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
   backButton: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
+    marginRight: 15,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 60,
-    paddingVertical: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
   title: {
     fontSize: 20,
@@ -462,7 +476,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
-    marginTop: 20,
   },
   section: {
     marginBottom: 30,
@@ -619,7 +632,7 @@ const styles = StyleSheet.create({
   },
   // Custom activity description styles
   descriptionContainer: {
-    marginTop: 20,
+    marginBottom: 20,
   },
   descriptionInput: {
     borderWidth: 1,
