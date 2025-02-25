@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import { useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -276,11 +276,15 @@ export default function CaloriesDetailsScreen() {
                   onPress={() => handleEditActivity(activity)}
                 >
                   <View style={styles.activityIcon}>
-                    <ActivityIcon
-                      name={activityType?.icon || IconNames.fitness}
-                      size={24}
-                      color="#333"
-                    />
+                    {activityType?.icon === IconNames.fitness ? (
+                      <MaterialCommunityIcons name="pencil-outline" size={24} color="#333" />
+                    ) : (
+                      <ActivityIcon
+                        name={activityType?.icon || IconNames.pencilOutline}
+                        size={24}
+                        color="#333"
+                      />
+                    )}
                   </View>
                   <View style={styles.activityInfo}>
                     <Text style={styles.activityName}>{activityType?.name || 'Activity'}</Text>

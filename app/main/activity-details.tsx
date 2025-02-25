@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView, 
 import { Text } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather, FontAwesome6 } from '@expo/vector-icons';
-import { ACTIVITY_CATEGORIES, ActivityType, calculateCaloriesBurned } from '@/types';
+import { ACTIVITY_CATEGORIES, ActivityType, calculateCaloriesBurned, IconNames } from '@/types';
 import { api } from '@/utils/api';
 import { useUser, selectIsMetric } from '@/store/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
@@ -55,13 +55,21 @@ export default function ActivityDetailsScreen() {
     ? { 
         id: 'custom', 
         name: 'Describe Exercise', 
-        icon: 'fitness', 
-        met: 5 // Default MET value
+        icon: IconNames.pencilOutline, 
+        met: 5, // Default MET value
+        caloriesPerHour: 300 // Adding required property
       } as ActivityType 
     : ACTIVITY_CATEGORIES.reduce((found: ActivityType | null, category) => {
         if (found) return found;
         return category.activities.find(a => a.id === activityId) || null;
-      }, null);
+      }, null) || { 
+        // Fallback for AI-generated activities not in predefined categories
+        id: activityId || 'unknown',
+        name: activityId ? activityId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity',
+        icon: IconNames.pencilOutline,
+        met: 5, // Default MET value
+        caloriesPerHour: 300 // Adding required property
+      } as ActivityType;
 
   const calculateAndSetCalories = (durationValue: number, intensityLevel: string) => {
     if (activity && user?.weight) {
@@ -84,38 +92,6 @@ export default function ActivityDetailsScreen() {
   const handleDurationChange = (value: string) => {
     setDuration(value);
     calculateAndSetCalories(Number(value) || 0, intensity);
-  };
-
-  const handleIntensityChange = (value: number) => {
-    // Create a stronger bias toward the middle value (1)
-    let snappedValue;
-    
-    // Expand the range for snapping to the middle value
-    if (value >= 0.7 && value <= 1.3) {
-      snappedValue = 1; // Medium
-    } else {
-      // For other values, round to nearest integer
-      snappedValue = value < 0.7 ? 0 : 2;
-    }
-    
-    // Ensure it's one of our three values
-    if (snappedValue < 0) snappedValue = 0;
-    if (snappedValue > 2) snappedValue = 2;
-    
-    // Set the intensity based on the snapped value
-    const intensityLevel = snappedValue === 0 ? 'low' : snappedValue === 1 ? 'medium' : 'high';
-    
-    // Update the progress value to the snapped value for visual feedback
-    progress.value = snappedValue;
-    
-    // Only update state if the intensity actually changed
-    if (intensityLevel !== intensity) {
-      setIntensity(intensityLevel);
-      calculateAndSetCalories(Number(duration), intensityLevel);
-      
-      // Provide haptic feedback when changing intensity
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
   };
 
   const analyzeDescription = async () => {
@@ -320,7 +296,11 @@ export default function ActivityDetailsScreen() {
         </TouchableOpacity>
         
         <View style={styles.header}>
-          <ActivityIcon name={activity.icon} size={24} color="#000" />
+          {activity.icon === IconNames.fitness ? (
+            <MaterialCommunityIcons name="pencil-outline" size={24} color="#000" />
+          ) : (
+            <ActivityIcon name={activity.icon} size={24} color="#000" />
+          )}
           <Text style={styles.headerTitle}>{activity.name}</Text>
         </View>
       </View>

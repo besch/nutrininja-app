@@ -125,7 +125,8 @@ export enum IconNames {
   hiking = 'hiking',
   climbing = 'climbing',
   kayak = 'kayak',
-  ski = 'ski'
+  ski = 'ski',
+  pencilOutline = 'pencil-outline'
 }
 
 export type ActivityCategory = {
