@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Text } from '@rneui/themed';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
 import { useRouter } from 'expo-router';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
@@ -37,9 +37,8 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
     };
   }, [meals, dailyCalorieGoal, burnedCalories]);
 
-  // Show shimmer when loading or when all values are in initial state
-  const isInitialState = !isLoading && totalCalories === 0 && remainingCalories === dailyCalorieGoal && burnedCalories === 0;
-  const shouldShowShimmer = isLoading || isInitialState;
+  // Only show shimmer when loading
+  const shouldShowShimmer = isLoading;
 
   // Calculate progress
   const progressValue = dailyCalorieGoal > 0 ? totalCalories / dailyCalorieGoal : 0;
@@ -155,7 +154,7 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
               styles.caloriesLabel,
               remainingCalories < 0 && styles.negativeValue
             ]}>
-              {remainingCalories < 0 ? 'Calories over' : 'Calories left'}
+              {totalCalories === 0 && !isLoading ? 'No meals logged' : (remainingCalories < 0 ? 'Calories over' : 'Calories left')}
             </Text>
             {burnedCalories > 0 && (
               <Text style={styles.burnedLabel}>

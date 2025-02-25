@@ -53,7 +53,8 @@ const MacroCard: React.FC<{
   color: string;
   total: number;
   isNegative: boolean;
-}> = ({ value, label, icon, color, total, isNegative }) => {
+  isEmpty: boolean;
+}> = ({ value, label, icon, color, total, isNegative, isEmpty }) => {
   const goalValue = isNegative ? total : (total + value);
   const progressValue = isNegative 
     ? Math.min(1, total ? Math.abs(value) / total : 0)
@@ -70,7 +71,7 @@ const MacroCard: React.FC<{
           numberOfLines={1}
           ellipsizeMode="tail"
         >
-          {isNegative ? `${label} over` : `${label} left`}
+          {isEmpty ? 'No data' : (isNegative ? `${label} over` : `${label} left`)}
         </Text>
         <View style={styles.macroProgress}>
           <Progress.Circle
@@ -145,12 +146,8 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
     };
   }, [meals, burnedCalories, proteinGoal, carbsGoal, fatsGoal]);
 
-  // Show shimmer when loading or when all values are in initial state (0)
-  const isInitialState = !isLoading && 
-    proteins.remaining === proteinGoal && proteins.total === 0 &&
-    carbs.remaining === carbsGoal && carbs.total === 0 &&
-    fats.remaining === fatsGoal && fats.total === 0;
-  const shouldShowShimmer = isLoading || isInitialState;
+  // Only show shimmer when loading
+  const shouldShowShimmer = isLoading;
 
   if (shouldShowShimmer) {
     return (
@@ -171,6 +168,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
         color="#FF3B30"
         total={proteins.total}
         isNegative={proteins.remaining < 0}
+        isEmpty={proteins.total === 0}
       />
       <MacroCard
         value={carbs.remaining}
@@ -179,6 +177,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
         color="#FF9500"
         total={carbs.total}
         isNegative={carbs.remaining < 0}
+        isEmpty={carbs.total === 0}
       />
       <MacroCard
         value={fats.remaining}
@@ -187,6 +186,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
         color="#007AFF"
         total={fats.total}
         isNegative={fats.remaining < 0}
+        isEmpty={fats.total === 0}
       />
     </View>
   );
