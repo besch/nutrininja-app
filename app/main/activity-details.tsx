@@ -15,6 +15,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSharedValue } from "react-native-reanimated";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LoadingDots } from '@/components/ui/LoadingDots';
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
@@ -24,6 +28,7 @@ export default function ActivityDetailsScreen() {
   const [duration, setDuration] = useState('15');
   const [calories, setCalories] = useState('0');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(!!activityToEditId);
   const [description, setDescription] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<null | { 
@@ -55,6 +60,7 @@ export default function ActivityDetailsScreen() {
   useEffect(() => {
     const fetchActivityData = async () => {
       if (activityToEditId) {
+        setIsDataLoading(true);
         try {
           const activities = await api.activities.getActivities(selectedDate);
           const activityToEdit = activities.find((a: any) => a.id === activityToEditId);
@@ -80,6 +86,8 @@ export default function ActivityDetailsScreen() {
           }
         } catch (error) {
           console.error('Failed to fetch activity data:', error);
+        } finally {
+          setIsDataLoading(false);
         }
       }
     };
@@ -262,35 +270,44 @@ export default function ActivityDetailsScreen() {
         
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.descriptionContainer}>
-            <TextInput
-              style={styles.descriptionInput}
-              placeholder="Describe workout time, intensity, etc."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              autoFocus
-            />
-            
-            <TouchableOpacity 
-              style={[
-                styles.aiButton, 
-                !description.trim() && styles.aiButtonDisabled
-              ]}
-              onPress={analyzeDescription}
-              disabled={!description.trim() || isAnalyzing}
-            >
-              {isAnalyzing ? (
-                <View style={styles.aiButtonContent}>
-                  <ActivityIndicator color="#fff" size="small" />
-                </View>
-              ) : (
-                <View style={styles.aiButtonContent}>
-                  <FontAwesome6 name="robot" size={18} color="#fff" style={styles.aiButtonIcon} />
-                  <Text style={styles.aiButtonText}>Created by AI</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            {isDataLoading ? (
+              <>
+                <ShimmerPlaceholder style={[styles.descriptionInput, { minHeight: 120 }]} />
+                <ShimmerPlaceholder style={[styles.aiButton, { marginTop: 16, alignSelf: 'flex-start', height: 48 }]} />
+              </>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.descriptionInput}
+                  placeholder="Describe workout time, intensity, etc."
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={4}
+                  autoFocus={!activityToEditId}
+                />
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.aiButton, 
+                    !description.trim() && styles.aiButtonDisabled
+                  ]}
+                  onPress={analyzeDescription}
+                  disabled={!description.trim() || isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <View style={styles.aiButtonContent}>
+                      <ActivityIndicator color="#fff" size="small" />
+                    </View>
+                  ) : (
+                    <View style={styles.aiButtonContent}>
+                      <FontAwesome6 name="robot" size={18} color="#fff" style={styles.aiButtonIcon} />
+                      <Text style={styles.aiButtonText}>Created by AI</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
             
             {aiResult && (
               <View style={styles.aiResultContainer}>
@@ -320,9 +337,9 @@ export default function ActivityDetailsScreen() {
         </ScrollView>
         
         <TouchableOpacity
-          style={[styles.addButton, (!isValid || !description.trim()) && styles.addButtonDisabled]}
+          style={[styles.addButton, (isDataLoading || !isValid || !description.trim()) && styles.addButtonDisabled]}
           onPress={handleSave}
-          disabled={!isValid || !description.trim() || isLoading}
+          disabled={isDataLoading || !isValid || !description.trim() || isLoading}
         >
           {isLoading ? (
             <View style={styles.buttonContent}>
@@ -363,71 +380,88 @@ export default function ActivityDetailsScreen() {
           
           <View style={styles.intensityContainer}>
             <View style={styles.intensityOptionsContainer}>
-              <TouchableOpacity 
-                style={styles.intensityOption}
-                onPress={() => {
-                  progress.value = 2;
-                  setIntensity('high');
-                  calculateAndSetCalories(Number(duration), 'high');
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-              >
-                <View style={[styles.intensityCheckbox, intensity === 'high' ? styles.intensityCheckboxActive : {}]}>
-                  {intensity === 'high' && <Feather name="check" size={16} color="#fff" />}
-                </View>
-                <View style={styles.intensityTextContainer}>
-                  <Text style={[styles.intensityLabel, intensity === 'high' ? styles.activeIntensity : {}]}>
-                    High
-                  </Text>
-                  <Text style={[styles.intensityDescription, intensity === 'high' ? styles.activeDescription : {}]}>
-                    {getIntensityDescription('high')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.intensityOption}
-                onPress={() => {
-                  progress.value = 1;
-                  setIntensity('medium');
-                  calculateAndSetCalories(Number(duration), 'medium');
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-              >
-                <View style={[styles.intensityCheckbox, intensity === 'medium' ? styles.intensityCheckboxActive : {}]}>
-                  {intensity === 'medium' && <Feather name="check" size={16} color="#fff" />}
-                </View>
-                <View style={styles.intensityTextContainer}>
-                  <Text style={[styles.intensityLabel, intensity === 'medium' ? styles.activeIntensity : {}]}>
-                    Medium
-                  </Text>
-                  <Text style={[styles.intensityDescription, intensity === 'medium' ? styles.activeDescription : {}]}>
-                    {getIntensityDescription('medium')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.intensityOption}
-                onPress={() => {
-                  progress.value = 0;
-                  setIntensity('low');
-                  calculateAndSetCalories(Number(duration), 'low');
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
-              >
-                <View style={[styles.intensityCheckbox, intensity === 'low' ? styles.intensityCheckboxActive : {}]}>
-                  {intensity === 'low' && <Feather name="check" size={16} color="#fff" />}
-                </View>
-                <View style={styles.intensityTextContainer}>
-                  <Text style={[styles.intensityLabel, intensity === 'low' ? styles.activeIntensity : {}]}>
-                    Low
-                  </Text>
-                  <Text style={[styles.intensityDescription, intensity === 'low' ? styles.activeDescription : {}]}>
-                    {getIntensityDescription('low')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              {isDataLoading ? (
+                // Shimmer placeholders for intensity options
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <View key={i} style={styles.intensityOption}>
+                      <ShimmerPlaceholder style={{ width: 24, height: 24, borderRadius: 4, marginRight: 10 }} />
+                      <View style={styles.intensityTextContainer}>
+                        <ShimmerPlaceholder style={{ width: 60, height: 24, borderRadius: 4, marginBottom: 5 }} />
+                        <ShimmerPlaceholder style={{ width: 200, height: 16, borderRadius: 4, marginBottom: 5 }} />
+                      </View>
+                    </View>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity 
+                    style={styles.intensityOption}
+                    onPress={() => {
+                      progress.value = 2;
+                      setIntensity('high');
+                      calculateAndSetCalories(Number(duration), 'high');
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                  >
+                    <View style={[styles.intensityCheckbox, intensity === 'high' ? styles.intensityCheckboxActive : {}]}>
+                      {intensity === 'high' && <Feather name="check" size={16} color="#fff" />}
+                    </View>
+                    <View style={styles.intensityTextContainer}>
+                      <Text style={[styles.intensityLabel, intensity === 'high' ? styles.activeIntensity : {}]}>
+                        High
+                      </Text>
+                      <Text style={[styles.intensityDescription, intensity === 'high' ? styles.activeDescription : {}]}>
+                        {getIntensityDescription('high')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.intensityOption}
+                    onPress={() => {
+                      progress.value = 1;
+                      setIntensity('medium');
+                      calculateAndSetCalories(Number(duration), 'medium');
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                  >
+                    <View style={[styles.intensityCheckbox, intensity === 'medium' ? styles.intensityCheckboxActive : {}]}>
+                      {intensity === 'medium' && <Feather name="check" size={16} color="#fff" />}
+                    </View>
+                    <View style={styles.intensityTextContainer}>
+                      <Text style={[styles.intensityLabel, intensity === 'medium' ? styles.activeIntensity : {}]}>
+                        Medium
+                      </Text>
+                      <Text style={[styles.intensityDescription, intensity === 'medium' ? styles.activeDescription : {}]}>
+                        {getIntensityDescription('medium')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.intensityOption}
+                    onPress={() => {
+                      progress.value = 0;
+                      setIntensity('low');
+                      calculateAndSetCalories(Number(duration), 'low');
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                  >
+                    <View style={[styles.intensityCheckbox, intensity === 'low' ? styles.intensityCheckboxActive : {}]}>
+                      {intensity === 'low' && <Feather name="check" size={16} color="#fff" />}
+                    </View>
+                    <View style={styles.intensityTextContainer}>
+                      <Text style={[styles.intensityLabel, intensity === 'low' ? styles.activeIntensity : {}]}>
+                        Low
+                      </Text>
+                      <Text style={[styles.intensityDescription, intensity === 'low' ? styles.activeDescription : {}]}>
+                        {getIntensityDescription('low')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -439,51 +473,78 @@ export default function ActivityDetailsScreen() {
           </View>
           
           <View style={styles.durationContainer}>
-            {durationOptions.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.durationButton,
-                  duration === option.value && styles.durationButtonActive
-                ]}
-                onPress={() => handleDurationChange(option.value)}
-              >
-                <Text style={[
-                  styles.durationButtonText,
-                  duration === option.value && styles.durationButtonTextActive
-                ]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {isDataLoading ? (
+              // Shimmer placeholders for duration buttons
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <ShimmerPlaceholder 
+                    key={i}
+                    style={{ 
+                      width: '48%', 
+                      height: 44, 
+                      borderRadius: 25, 
+                      marginBottom: 10 
+                    }} 
+                  />
+                ))}
+              </>
+            ) : (
+              <>
+                {durationOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.durationButton,
+                      duration === option.value && styles.durationButtonActive
+                    ]}
+                    onPress={() => handleDurationChange(option.value)}
+                  >
+                    <Text style={[
+                      styles.durationButtonText,
+                      duration === option.value && styles.durationButtonTextActive
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
           </View>
           
           <View style={styles.customDurationContainer}>
             <Text style={styles.customDurationLabel}>Custom duration (minutes)</Text>
-            <TextInput
-              style={styles.customDurationInput}
-              value={duration}
-              onChangeText={(text) => {
-                const numericValue = text.replace(/[^0-9]/g, '');
-                handleDurationChange(numericValue);
-              }}
-              keyboardType="number-pad"
-              placeholder="Enter minutes"
-              maxLength={3}
-            />
+            {isDataLoading ? (
+              <ShimmerPlaceholder style={{ height: 48, borderRadius: 8 }} />
+            ) : (
+              <TextInput
+                style={styles.customDurationInput}
+                value={duration}
+                onChangeText={(text) => {
+                  const numericValue = text.replace(/[^0-9]/g, '');
+                  handleDurationChange(numericValue);
+                }}
+                keyboardType="number-pad"
+                placeholder="Enter minutes"
+                maxLength={3}
+              />
+            )}
           </View>
           
           <View style={styles.caloriesContainer}>
             <Text style={styles.caloriesLabel}>Estimated calories burned</Text>
-            <Text style={styles.caloriesValue}>{calories} kcal</Text>
+            {isDataLoading ? (
+              <ShimmerPlaceholder style={{ width: 100, height: 32, borderRadius: 4 }} />
+            ) : (
+              <Text style={styles.caloriesValue}>{calories} kcal</Text>
+            )}
           </View>
         </View>
       </ScrollView>
       
       <TouchableOpacity
-        style={[styles.addButton, !isValid && styles.addButtonDisabled]}
+        style={[styles.addButton, (isDataLoading || !isValid) && styles.addButtonDisabled]}
         onPress={handleSave}
-        disabled={!isValid || isLoading}
+        disabled={isDataLoading || !isValid || isLoading}
       >
         {isLoading ? (
           <View style={styles.buttonContent}>
