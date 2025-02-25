@@ -237,9 +237,24 @@ export const api = {
       duration_minutes: number;
       activity_date: string;
       intensity?: string;
+      description?: string;
     }) => {
       return fetchApi('/api/activities', {
         method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    updateActivity: async (id: string, data: {
+      activity_type: string;
+      calories_burned: number;
+      duration_minutes: number;
+      activity_date: string;
+      intensity?: string;
+      description?: string;
+    }) => {
+      return fetchApi(`/api/activities/${id}`, {
+        method: 'PUT',
         body: JSON.stringify(data),
       });
     },

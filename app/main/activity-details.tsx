@@ -20,7 +20,7 @@ export default function ActivityDetailsScreen() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
-  const { activityId, selectedDate } = useLocalSearchParams<{ activityId: string; selectedDate: string }>();
+  const { activityId, selectedDate, activityToEditId } = useLocalSearchParams<{ activityId: string; selectedDate: string; activityToEditId?: string }>();
   const [duration, setDuration] = useState('15');
   const [calories, setCalories] = useState('0');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +50,42 @@ export default function ActivityDetailsScreen() {
   useEffect(() => {
     dispatch(fetchUserData());
   }, [dispatch]);
+
+  // Fetch existing activity data if editing
+  useEffect(() => {
+    const fetchActivityData = async () => {
+      if (activityToEditId) {
+        try {
+          const activities = await api.activities.getActivities(selectedDate);
+          const activityToEdit = activities.find((a: any) => a.id === activityToEditId);
+          
+          if (activityToEdit) {
+            setDuration(activityToEdit.duration_minutes.toString());
+            setCalories(activityToEdit.calories_burned.toString());
+            setIntensity(activityToEdit.intensity || 'medium');
+            
+            // Set progress value based on intensity
+            if (activityToEdit.intensity === 'low') {
+              progress.value = 0;
+            } else if (activityToEdit.intensity === 'high') {
+              progress.value = 2;
+            } else {
+              progress.value = 1;
+            }
+
+            // Set description if available
+            if (activityToEdit.description) {
+              setDescription(activityToEdit.description);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch activity data:', error);
+        }
+      }
+    };
+
+    fetchActivityData();
+  }, [activityToEditId, selectedDate, progress]);
 
   const activity = activityId === 'custom' 
     ? { 
@@ -136,13 +172,22 @@ export default function ActivityDetailsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsLoading(true);
     try {
-      await api.activities.logActivity({
+      const activityData = {
         activity_type: activityId === 'custom' && aiResult?.activityType ? aiResult.activityType : activity.id,
         calories_burned: Number(calories),
         duration_minutes: Number(duration),
         activity_date: selectedDate,
         intensity: intensity,
-      });
+        description: activityId === 'custom' ? description : undefined,
+      };
+
+      if (activityToEditId) {
+        // Update existing activity
+        await api.activities.updateActivity(activityToEditId, activityData);
+      } else {
+        // Create new activity
+        await api.activities.logActivity(activityData);
+      }
 
       // Invalidate relevant queries to refresh the data
       await Promise.all([
