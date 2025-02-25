@@ -16,14 +16,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { updateMealInStore } from "@/store/mealsSlice";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Meal, User } from "@/types";
-import { Button } from "@/components/ui/Button";
+import type { Meal } from "@/types";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
-import ActivityIcon from "@/components/ActivityIcon";
-import { ACTIVITY_CATEGORIES, ActivityType, ActivityCategory, IconNames } from "@/types";
-import { useSelectedDate } from "@/store/userSlice";
 import { Ionicons } from "@expo/vector-icons";
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
@@ -43,8 +39,6 @@ export default function FoodDetailsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const hasLoadedImageRef = useRef<{[key: string]: boolean}>({});
-  const [isSaved, setIsSaved] = useState(false);
-  const { id: userId } = useSelector((state: RootState) => state.user);
 
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();

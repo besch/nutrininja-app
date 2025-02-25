@@ -12,10 +12,9 @@ import { AppDispatch } from '@/store';
 import ActivityIcon from '@/components/ActivityIcon';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
-import { Slider } from "react-native-awesome-slider";
 import { useSharedValue } from "react-native-reanimated";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { LoadingDots } from '@/components/ui/LoadingDots';
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
@@ -36,11 +35,8 @@ export default function ActivityDetailsScreen() {
   const user = useUser();
   const isMetric = useSelector(selectIsMetric);
   
-  // Intensity slider values
   const [intensity, setIntensity] = useState('medium');
   const progress = useSharedValue(1); // Default to medium (middle position)
-  const min = useSharedValue(0);
-  const max = useSharedValue(2);
   
   // Duration options
   const durationOptions = [
@@ -305,9 +301,11 @@ export default function ActivityDetailsScreen() {
           onPress={handleSave}
           disabled={!isValid || !description.trim() || isLoading}
         >
-          <Text style={styles.addButtonText}>
-            {isLoading ? 'Saving...' : 'Add Exercise'}
-          </Text>
+          {isLoading ? (
+            <LoadingDots color="#fff" size={6} />
+          ) : (
+            <Text style={styles.addButtonText}>Add Exercise</Text>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -458,9 +456,11 @@ export default function ActivityDetailsScreen() {
         onPress={handleSave}
         disabled={!isValid || isLoading}
       >
-        <Text style={styles.addButtonText}>
-          {isLoading ? 'Saving...' : 'Add'}
-        </Text>
+        {isLoading ? (
+          <LoadingDots color="#fff" size={6} />
+        ) : (
+          <Text style={styles.addButtonText}>Add</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
