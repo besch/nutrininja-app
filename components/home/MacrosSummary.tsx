@@ -56,9 +56,14 @@ const MacroCard: React.FC<{
   isEmpty: boolean;
 }> = ({ value, label, icon, color, total, isNegative, isEmpty }) => {
   const goalValue = isNegative ? total : (total + value);
-  const progressValue = isNegative 
-    ? Math.min(1, total ? Math.abs(value) / total : 0)
-    : Math.min(1, goalValue ? total / goalValue : 0);
+  const progressValue = useMemo(() => {
+    // If we have no data yet, return 0 to avoid showing 100% progress
+    if (isEmpty || goalValue === 0) return 0;
+    
+    return isNegative 
+      ? Math.min(1, total ? Math.abs(value) / total : 0)
+      : Math.min(1, goalValue ? total / goalValue : 0);
+  }, [isNegative, total, value, goalValue, isEmpty]);
 
   return (
     <View style={styles.macroCard}>
@@ -130,24 +135,27 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
     const burnedCarbs = Math.round(burnedCalories * carbsRatio * 0.25); // 1g carbs = 4 calories
     const burnedFats = Math.round(burnedCalories * fatsRatio * 0.11); // 1g fat = 9 calories
     
+    // Check if we have valid goals
+    const hasValidGoals = proteinGoal > 0 && carbsGoal > 0 && fatsGoal > 0;
+    
     return {
       proteins: {
         total: totals.proteins,
-        remaining: proteinGoal - totals.proteins + burnedProteins
+        remaining: hasValidGoals ? (proteinGoal - totals.proteins + burnedProteins) : 0
       },
       carbs: {
         total: totals.carbs,
-        remaining: carbsGoal - totals.carbs + burnedCarbs
+        remaining: hasValidGoals ? (carbsGoal - totals.carbs + burnedCarbs) : 0
       },
       fats: {
         total: totals.fats,
-        remaining: fatsGoal - totals.fats + burnedFats
+        remaining: hasValidGoals ? (fatsGoal - totals.fats + burnedFats) : 0
       }
     };
   }, [meals, burnedCalories, proteinGoal, carbsGoal, fatsGoal]);
 
-  // Only show shimmer when loading
-  const shouldShowShimmer = isLoading;
+  // Show shimmer when loading or when we don't have valid goals
+  const shouldShowShimmer = isLoading || (proteinGoal <= 0 || carbsGoal <= 0 || fatsGoal <= 0);
 
   if (shouldShowShimmer) {
     return (

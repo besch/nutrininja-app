@@ -166,7 +166,7 @@ export default function HomeScreen() {
 
       <CaloriesSummary {...summaryProps} />
 
-      <MacrosSummary {...macroProps} />
+      <MacrosSummary {...macroProps} key={dateStr} />
 
       <RecentMeals
         meals={meals}
