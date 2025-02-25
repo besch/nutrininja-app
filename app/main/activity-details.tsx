@@ -91,8 +91,16 @@ export default function ActivityDetailsScreen() {
   };
 
   const handleIntensityChange = (value: number) => {
-    // Snap to exact values: 0, 1, or 2
-    let snappedValue = Math.round(value);
+    // Create a stronger bias toward the middle value (1)
+    let snappedValue;
+    
+    // Expand the range for snapping to the middle value
+    if (value >= 0.7 && value <= 1.3) {
+      snappedValue = 1; // Medium
+    } else {
+      // For other values, round to nearest integer
+      snappedValue = value < 0.7 ? 0 : 2;
+    }
     
     // Ensure it's one of our three values
     if (snappedValue < 0) snappedValue = 0;
@@ -104,8 +112,14 @@ export default function ActivityDetailsScreen() {
     // Update the progress value to the snapped value for visual feedback
     progress.value = snappedValue;
     
-    setIntensity(intensityLevel);
-    calculateAndSetCalories(Number(duration), intensityLevel);
+    // Only update state if the intensity actually changed
+    if (intensityLevel !== intensity) {
+      setIntensity(intensityLevel);
+      calculateAndSetCalories(Number(duration), intensityLevel);
+      
+      // Provide haptic feedback when changing intensity
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const analyzeDescription = async () => {
@@ -321,9 +335,20 @@ export default function ActivityDetailsScreen() {
           </View>
           
           <View style={styles.intensityContainer}>
-            <View style={styles.sliderContainer}>
-              <View style={styles.intensityLabelsContainer}>
-                <View style={styles.intensityLabelContainer}>
+            <View style={styles.intensityOptionsContainer}>
+              <TouchableOpacity 
+                style={styles.intensityOption}
+                onPress={() => {
+                  progress.value = 2;
+                  setIntensity('high');
+                  calculateAndSetCalories(Number(duration), 'high');
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <View style={[styles.intensityCheckbox, intensity === 'high' ? styles.intensityCheckboxActive : {}]}>
+                  {intensity === 'high' && <Feather name="check" size={16} color="#fff" />}
+                </View>
+                <View style={styles.intensityTextContainer}>
                   <Text style={[styles.intensityLabel, intensity === 'high' ? styles.activeIntensity : {}]}>
                     High
                   </Text>
@@ -331,8 +356,21 @@ export default function ActivityDetailsScreen() {
                     {getIntensityDescription('high')}
                   </Text>
                 </View>
-                
-                <View style={styles.intensityLabelContainer}>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.intensityOption}
+                onPress={() => {
+                  progress.value = 1;
+                  setIntensity('medium');
+                  calculateAndSetCalories(Number(duration), 'medium');
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <View style={[styles.intensityCheckbox, intensity === 'medium' ? styles.intensityCheckboxActive : {}]}>
+                  {intensity === 'medium' && <Feather name="check" size={16} color="#fff" />}
+                </View>
+                <View style={styles.intensityTextContainer}>
                   <Text style={[styles.intensityLabel, intensity === 'medium' ? styles.activeIntensity : {}]}>
                     Medium
                   </Text>
@@ -340,8 +378,21 @@ export default function ActivityDetailsScreen() {
                     {getIntensityDescription('medium')}
                   </Text>
                 </View>
-                
-                <View style={styles.intensityLabelContainer}>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.intensityOption}
+                onPress={() => {
+                  progress.value = 0;
+                  setIntensity('low');
+                  calculateAndSetCalories(Number(duration), 'low');
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <View style={[styles.intensityCheckbox, intensity === 'low' ? styles.intensityCheckboxActive : {}]}>
+                  {intensity === 'low' && <Feather name="check" size={16} color="#fff" />}
+                </View>
+                <View style={styles.intensityTextContainer}>
                   <Text style={[styles.intensityLabel, intensity === 'low' ? styles.activeIntensity : {}]}>
                     Low
                   </Text>
@@ -349,27 +400,7 @@ export default function ActivityDetailsScreen() {
                     {getIntensityDescription('low')}
                   </Text>
                 </View>
-              </View>
-              
-              <GestureHandlerRootView style={styles.sliderWrapper}>
-                <Slider
-                  progress={progress}
-                  minimumValue={min}
-                  maximumValue={max}
-                  onValueChange={handleIntensityChange}
-                  renderBubble={() => null}
-                  renderThumb={() => (
-                    <View style={styles.customThumb} />
-                  )}
-                  theme={{
-                    minimumTrackTintColor: "#000000",
-                    maximumTrackTintColor: "#EEEEEE",
-                    bubbleBackgroundColor: "#FFFFFF",
-                    bubbleTextColor: "#000000"
-                  }}
-                  style={styles.slider}
-                />
-              </GestureHandlerRootView>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -495,29 +526,31 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
   },
-  sliderContainer: {
+  intensityOptionsContainer: {
+    flexDirection: 'column',
+    width: '100%',
+  },
+  intensityOption: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
   },
-  sliderWrapper: {
-    width: 60,
-    height: 180,
+  intensityCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 10,
   },
-  slider: {
-    width: 180,
-    height: 60,
-    transform: [{ rotate: '270deg' }],
+  intensityCheckboxActive: {
+    backgroundColor: '#000',
+    borderColor: '#000',
   },
-  intensityLabelsContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    height: 180,
-    paddingVertical: 10,
-  },
-  intensityLabelContainer: {
-    marginBottom: 10,
+  intensityTextContainer: {
+    flexDirection: 'column',
   },
   intensityLabel: {
     fontSize: 18,
@@ -536,22 +569,6 @@ const styles = StyleSheet.create({
   },
   activeDescription: {
     color: '#666',
-  },
-  customThumb: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 3,
-    borderColor: "#000000",
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   durationContainer: {
     flexDirection: 'row',
