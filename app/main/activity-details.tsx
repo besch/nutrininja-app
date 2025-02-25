@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
 import { Text } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome6 } from '@expo/vector-icons';
 import { ACTIVITY_CATEGORIES, ActivityType, calculateCaloriesBurned } from '@/types';
 import { api } from '@/utils/api';
 import { useUser, selectIsMetric } from '@/store/userSlice';
@@ -263,7 +263,7 @@ export default function ActivityDetailsScreen() {
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <>
-                  <Feather name="star" size={18} color="#fff" style={styles.aiButtonIcon} />
+                  <FontAwesome6 name="robot" size={18} color="#fff" style={styles.aiButtonIcon} />
                   <Text style={styles.aiButtonText}>Created by AI</Text>
                 </>
               )}

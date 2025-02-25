@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { Text } from "@rneui/themed";
 import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome6 } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
@@ -12,8 +12,8 @@ import { api } from "@/utils/api";
 import moment from "moment";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { LoadingDots } from "@/components/ui/LoadingDots";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store";
 import { updateMealInStore } from "@/store/mealsSlice";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Meal } from "@/types";
@@ -359,6 +359,7 @@ export default function FoodDetailsScreen() {
               <View style={[styles.fixButton, styles.disabledButton]}>
                 <View style={styles.fixButtonContent}>
                   <Feather name="cpu" size={20} color="#999" />
+                  <FontAwesome6 name="robot" size={20} color="#999" />
                   <Text style={[styles.fixButtonText, styles.disabledText]}>
                     Fix Results
                   </Text>
