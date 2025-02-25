@@ -6,6 +6,7 @@ import { ACTIVITY_CATEGORIES, ActivityType, IconNames } from '@/types';
 import { Feather } from '@expo/vector-icons';
 import { useSelectedDate } from '@/store/userSlice';
 import ActivityIcon from '@/components/ActivityIcon';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function ActivitySelectionScreen() {
   const router = useRouter();
@@ -18,19 +19,22 @@ export default function ActivitySelectionScreen() {
       name: 'Run',
       icon: IconNames.run,
       description: 'Running, jogging, sprinting, etc.',
-      category: 'cardio'
+      category: 'cardio',
+      useCustomIcon: false
     },
     {
       id: 'weight_training',
       name: 'Weight lifting',
       icon: IconNames.weightlifting,
       description: 'Machines, free weights, etc.',
-      category: 'gym'
+      category: 'gym',
+      useCustomIcon: false
     },
     {
       id: 'custom',
       name: 'Describe',
-      icon: IconNames.fitness,
+      icon: IconNames.run, // Providing a fallback icon even though we won't use it
+      useCustomIcon: true,
       description: 'Write your workout in text',
       category: 'custom'
     }
@@ -78,11 +82,9 @@ export default function ActivitySelectionScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Feather name="arrow-left" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.title}>Exercise</Text>
+        <Text style={styles.title}>Log Exercise</Text>
 
         <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Log Exercise</Text>
-          
           <ScrollView 
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -95,11 +97,15 @@ export default function ActivitySelectionScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.iconContainer}>
-                  <ActivityIcon 
-                    name={exerciseType.icon} 
-                    size={28} 
-                    color="#333"
-                  />
+                  {exerciseType.useCustomIcon ? (
+                    <MaterialIcons name="question-mark" size={24} color="black" />
+                  ) : (
+                    <ActivityIcon 
+                      name={exerciseType.icon} 
+                      size={28} 
+                      color="#333"
+                    />
+                  )}
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityName}>{exerciseType.name}</Text>
@@ -155,11 +161,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
   },
   activityCard: {
     flexDirection: 'row',
