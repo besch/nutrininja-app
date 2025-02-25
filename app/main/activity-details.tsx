@@ -236,12 +236,14 @@ export default function ActivityDetailsScreen() {
               disabled={!description.trim() || isAnalyzing}
             >
               {isAnalyzing ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <View style={styles.aiButtonContent}>
+                  <ActivityIndicator color="#fff" size="small" />
+                </View>
               ) : (
-                <>
+                <View style={styles.aiButtonContent}>
                   <FontAwesome6 name="robot" size={18} color="#fff" style={styles.aiButtonIcon} />
                   <Text style={styles.aiButtonText}>Created by AI</Text>
-                </>
+                </View>
               )}
             </TouchableOpacity>
             
@@ -278,7 +280,9 @@ export default function ActivityDetailsScreen() {
           disabled={!isValid || !description.trim() || isLoading}
         >
           {isLoading ? (
-            <LoadingDots color="#fff" size={6} />
+            <View style={styles.buttonContent}>
+              <LoadingDots color="#fff" size={6} />
+            </View>
           ) : (
             <Text style={styles.addButtonText}>Add Exercise</Text>
           )}
@@ -308,7 +312,7 @@ export default function ActivityDetailsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Feather name="sun" size={24} color="#000" />
+            <MaterialCommunityIcons name="av-timer" size={24} color="black" />
             <Text style={styles.sectionTitle}>Set intensity</Text>
           </View>
           
@@ -437,7 +441,9 @@ export default function ActivityDetailsScreen() {
         disabled={!isValid || isLoading}
       >
         {isLoading ? (
-          <LoadingDots color="#fff" size={6} />
+          <View style={styles.buttonContent}>
+            <LoadingDots color="#fff" size={6} />
+          </View>
         ) : (
           <Text style={styles.addButtonText}>Add</Text>
         )}
@@ -618,6 +624,8 @@ const styles = StyleSheet.create({
     padding: 15,
     margin: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
   },
   addButtonDisabled: {
     backgroundColor: '#ccc',
@@ -626,6 +634,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    lineHeight: 24,
   },
   // Custom activity description styles
   descriptionContainer: {
@@ -650,6 +659,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 16,
     alignSelf: 'flex-start',
+    height: 48,
   },
   aiButtonDisabled: {
     backgroundColor: '#ccc',
@@ -695,5 +705,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     color: '#333',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 24,
+    minWidth: 100,
+  },
+  aiButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 24,
+    minWidth: 120,
   },
 }); 
