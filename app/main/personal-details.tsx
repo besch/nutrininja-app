@@ -38,7 +38,6 @@ export default function PersonalDetailsScreen() {
     dispatch(fetchUserData());
   }, [dispatch]);
 
-  // State for all editable fields
   const [goalWeight, setGoalWeight] = useState<number | null>(user?.target_weight ?? null);
   const [currentWeight, setCurrentWeight] = useState<number | null>(user?.weight ?? null);
   const [height, setHeight] = useState<number | null>(user?.height ?? null);
@@ -48,7 +47,6 @@ export default function PersonalDetailsScreen() {
   );
   const [pace, setPace] = useState<number | null>(user?.pace ?? null);
 
-  // Update local state when user data changes
   React.useEffect(() => {
     if (user) {
       setGoalWeight(user.target_weight ?? null);
@@ -62,7 +60,6 @@ export default function PersonalDetailsScreen() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: any) => {
-      // Only update the profile
       const updatedData = await api.user.updateProfile({
         user_id: user?.id,
         ...updates
@@ -71,7 +68,6 @@ export default function PersonalDetailsScreen() {
     },
     onSuccess: (updatedData) => {
       dispatch(setUserData(updatedData));
-      // Track goal updates
       trackPersonalGoalSet(updatedData);
       
       // Invalidate and refetch queries to ensure all screens are updated
@@ -84,10 +80,8 @@ export default function PersonalDetailsScreen() {
 
   const regenerateWorkoutPlanMutation = useMutation({
     mutationFn: async (userData: any) => {
-      // Generate new workout plan
       const workoutPlan = await api.workout.generatePlan(userData);
       
-      // Update user data with new workout plan and goals
       const finalData = await api.user.updateProfile({
         user_id: user?.id,
         workout_plan: workoutPlan,
@@ -133,10 +127,6 @@ export default function PersonalDetailsScreen() {
     return new Date(date).toLocaleDateString();
   };
 
-  const formatValue = (value: number | null, unit: string) => {
-    return value !== null ? `${Math.round(value)} ${unit}` : '-';
-  };
-
   const handleGoalWeightChange = async (value: number) => {
     try {
       const weightInKg = isMetric ? value : value / 2.20462;
@@ -167,14 +157,11 @@ export default function PersonalDetailsScreen() {
     try {
       const weightInKg = isMetric ? value : value / 2.20462;
       
-      // First create a weight check-in
       await api.weight.checkIn(Number(weightInKg.toFixed(1)), moment().format('YYYY-MM-DD'));
       
-      // Then update the profile
       await updateProfileMutation.mutateAsync({ weight: weightInKg });
       setEditField(null);
 
-      // Regenerate workout plan in the background
       regenerateWorkoutPlanMutation.mutate({
         birth_date: user?.birth_date,
         gender: user?.gender,

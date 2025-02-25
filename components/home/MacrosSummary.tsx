@@ -112,7 +112,6 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
   fatsGoal = 0,
 }) => {
   const { proteins, carbs, fats } = useMemo(() => {
-    // Calculate total macros from completed meals
     const totals = meals
       .filter(meal => meal.analysis_status === 'completed')
       .reduce((acc, meal) => ({
@@ -154,7 +153,6 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = ({
     };
   }, [meals, burnedCalories, proteinGoal, carbsGoal, fatsGoal]);
 
-  // Show shimmer when loading or when we don't have valid goals
   const shouldShowShimmer = isLoading || (proteinGoal <= 0 || carbsGoal <= 0 || fatsGoal <= 0);
 
   if (shouldShowShimmer) {

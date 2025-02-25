@@ -37,10 +37,8 @@ export const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
     };
   }, [meals, dailyCalorieGoal, burnedCalories]);
 
-  // Only show shimmer when loading
   const shouldShowShimmer = isLoading;
 
-  // Calculate progress
   const progressValue = dailyCalorieGoal > 0 ? totalCalories / dailyCalorieGoal : 0;
 
   const progressAnim = useRef(new Animated.Value(0)).current;

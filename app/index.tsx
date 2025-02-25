@@ -24,6 +24,5 @@ export default function App() {
     }
   }
 
-  // Return empty view while checking
   return null
 }

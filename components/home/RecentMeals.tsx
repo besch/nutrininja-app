@@ -5,7 +5,6 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import type { Meal } from '@/types';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);

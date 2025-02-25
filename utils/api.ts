@@ -1,7 +1,5 @@
 import { supabase } from './supabase';
 import type { DailyProgressResponse } from '@/types';
-import * as FileSystem from 'expo-file-system';
-import * as ImageManipulator from 'expo-image-manipulator';
 
 type ApiOptions = RequestInit & {
   requireAuth?: boolean;
