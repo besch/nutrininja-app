@@ -3,10 +3,9 @@ import { View, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 're
 import { Text } from '@rneui/themed';
 import { useRouter } from 'expo-router';
 import { ACTIVITY_CATEGORIES, ActivityType, IconNames } from '@/types';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSelectedDate } from '@/store/userSlice';
 import ActivityIcon from '@/components/ActivityIcon';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function ActivitySelectionScreen() {
   const router = useRouter();
@@ -98,7 +97,7 @@ export default function ActivitySelectionScreen() {
               >
                 <View style={styles.iconContainer}>
                   {exerciseType.useCustomIcon ? (
-                    <MaterialIcons name="question-mark" size={24} color="black" />
+                    <MaterialCommunityIcons name="pencil-outline" size={24} color="black" />
                   ) : (
                     <ActivityIcon 
                       name={exerciseType.icon} 

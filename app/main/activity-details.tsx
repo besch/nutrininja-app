@@ -13,7 +13,7 @@ import ActivityIcon from '@/components/ActivityIcon';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSharedValue } from "react-native-reanimated";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LoadingDots } from '@/components/ui/LoadingDots';
 
 export default function ActivityDetailsScreen() {
@@ -234,7 +234,7 @@ export default function ActivityDetailsScreen() {
           </TouchableOpacity>
           
           <View style={styles.header}>
-            <MaterialIcons name="question-mark" size={24} color="black" />
+            <MaterialCommunityIcons name="pencil-outline" size={24} color="black" />
             <Text style={styles.headerTitle}>Describe Exercise</Text>
           </View>
         </View>
