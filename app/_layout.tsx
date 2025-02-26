@@ -31,13 +31,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// This component will use Redux hooks after the Provider is set up
 function AppContent() {
   const dispatch = useDispatch<AppDispatch>();
   const segments = useSegments();
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
-
-  GoMarketMe.initialize(process.env.EXPO_PUBLIC_GOMARKETME_API_KEY as string);
 
   useEffect(() => {
     const checkSessionAndFetchData = async () => {
@@ -53,6 +52,7 @@ function AppContent() {
 
   useEffect(() => {
     initializeAllSDKs();
+    GoMarketMe.initialize(process.env.EXPO_PUBLIC_GOMARKETME_API_KEY as string);
   }, []);
 
   // useEffect(() => {
@@ -82,9 +82,13 @@ function AppContent() {
   // }, []);
 
   return (
-    <Stack screenOptions={{
-      headerBackTitle: "Back",
-    }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: Platform.OS === "ios" ? "default" : "slide_from_right",
+        animationDuration: 200,
+      }}
+    >
       <Stack.Screen name="index" options={{ headerShown: false }}/>
       <Stack.Screen name="onboarding/index" options={{ headerShown: false }}/>
       <Stack.Screen name="onboarding/steps/index" options={{ headerShown: false }}/>
@@ -108,6 +112,7 @@ function AppContent() {
           
           return {
             headerTitle: titles[routeName] || 'Main',
+            headerBackTitle: "Back",
           };
         }}
       />
@@ -137,15 +142,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
             <ErrorBoundary>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  animation: Platform.OS === "ios" ? "default" : "slide_from_right",
-                  animationDuration: 200,
-                }}
-              >
-                <AppContent />
-              </Stack>
+              <AppContent />
             </ErrorBoundary>
           </ThemeProvider>
         </QueryClientProvider>
