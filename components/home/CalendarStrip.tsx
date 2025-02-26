@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import CalendarStripLib, { IDayComponentProps } from 'react-native-calendar-strip';
-import moment, { Moment } from 'moment';
+import moment, { Moment, isDuration } from 'moment';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/utils/api';
 import Svg, { Circle } from 'react-native-svg';
@@ -21,6 +21,19 @@ interface DayCalorieProgress {
   burnedCalories: number;
 }
 
+// Helper function to safely convert to a moment object
+const safelyCreateMoment = (date: any): Moment => {
+  if (moment.isMoment(date)) return date;
+  if (isDuration(date)) return moment(); // Return current date for Duration objects
+  
+  try {
+    return moment(date);
+  } catch (e) {
+    console.warn('Failed to parse date', e);
+    return moment();
+  }
+};
+
 const DayComponent = ({ 
   date, 
   calorieData, 
@@ -29,14 +42,15 @@ const DayComponent = ({
   isToday,
   onDateSelected
 }: { 
-  date: string, 
+  date: any, // Using any to accommodate the library's date type
   calorieData?: Record<string, DayCalorieProgress>,
   dailyCalorieGoal: number,
   isSelected?: boolean,
   isToday: boolean,
   onDateSelected: (date: Moment) => void
 }) => {
-  const momentDate = moment(date);
+  // Safely convert to moment object
+  const momentDate = useMemo(() => safelyCreateMoment(date), [date]);
   const dateStr = momentDate.format('YYYY-MM-DD');
   const dayData = calorieData?.[dateStr];
   
@@ -128,6 +142,9 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
     gcTime: 30 * 60 * 1000
   });
 
+  // Create a stable reference to today's date string
+  const todayStr = useMemo(() => moment().format('YYYY-MM-DD'), []);
+
   return (
     <CalendarStripLib
       calendarAnimation={{ type: "sequence", duration: 30 }}
@@ -144,24 +161,32 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
       minDate={minDate}
       maxDate={maxDate}
       scrollerPaging={true}
-      startingDate={moment().subtract(3, "days")}
       scrollToOnSetSelectedDate={false}
       updateWeek={true}
       dayComponent={(props: IDayComponentProps) => (
         <DayComponent
-          date={props.date.toString()}
+          date={props.date}
           calorieData={calorieData}
           dailyCalorieGoal={dailyCalorieGoal}
           isSelected={props.selected}
-          isToday={moment(props.date.toString()).isSame(moment(), 'day')}
+          isToday={safelyCreateMoment(props.date).format('YYYY-MM-DD') === todayStr}
           onDateSelected={onDateSelected}
         />
       )}
       onWeekScrollEnd={(start, end) => {
-        if (moment(start).isSame(minDate, 'day')) {
-          onCalendarEndReached('left');
-        } else if (moment(end).isSame(maxDate, 'day')) {
-          onCalendarEndReached('right');
+        if (!start || !end) return;
+        
+        try {
+          const startMoment = safelyCreateMoment(start);
+          const endMoment = safelyCreateMoment(end);
+          
+          if (startMoment.isSame(minDate, 'day')) {
+            onCalendarEndReached('left');
+          } else if (endMoment.isSame(maxDate, 'day')) {
+            onCalendarEndReached('right');
+          }
+        } catch (e) {
+          console.warn('Failed to process week scroll end', e);
         }
       }}
     />
