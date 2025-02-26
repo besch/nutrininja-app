@@ -481,4 +481,7 @@ export function OnboardingScreen() {
   );
 }
 
-export default OnboardingScreen;
+// Add default export for the router
+export default function Onboarding() {
+  return <OnboardingScreen />;
+}

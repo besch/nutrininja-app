@@ -88,7 +88,6 @@ function AppContent() {
       <Stack.Screen name="index" options={{ headerShown: false }}/>
       <Stack.Screen name="onboarding/index" options={{ headerShown: false }}/>
       <Stack.Screen name="onboarding/steps/index" options={{ headerShown: false }}/>
-      <Stack.Screen name="onboarding" options={{ headerShown: false }}/>
       <Stack.Screen
         name="(tabs)"
         options={{ gestureEnabled: false, headerShown: false }}
