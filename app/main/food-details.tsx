@@ -52,6 +52,8 @@ export default function FoodDetailsScreen() {
     },
   });
 
+  console.log(meal);
+
   const isAnalyzing = meal?.analysis_status === "pending";
   const analysisFailed = meal?.analysis_status === "failed";
 
@@ -599,6 +601,48 @@ export default function FoodDetailsScreen() {
             </View>
           </View>
 
+          {!isAnalyzing && !analysisFailed && meal && (
+            <View style={styles.detailsSection}>
+              {/* Check both direct properties and nested ai_response properties */}
+              {(meal.health_score !== undefined || (meal.ai_response && meal.ai_response.health_score !== undefined)) && (
+                <View style={styles.healthScoreContainer}>
+                  <View style={styles.healthScoreHeader}>
+                    <Text style={styles.sectionTitle}>Health Score</Text>
+                    <View style={[
+                      styles.scoreIndicator, 
+                      {backgroundColor: 
+                        (meal.health_score || (meal.ai_response && meal.ai_response.health_score) || 0) >= 7 
+                        ? '#4CD964' 
+                        : (meal.health_score || (meal.ai_response && meal.ai_response.health_score) || 0) >= 4 
+                          ? '#FF9500' 
+                          : '#FF3B30'
+                      }
+                    ]}>
+                      <Text style={styles.scoreText}>
+                        {meal.health_score || (meal.ai_response && meal.ai_response.health_score) || 0}/10
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  {(meal.health_score_details || (meal.ai_response && meal.ai_response.health_score_details)) && (
+                    <Text style={styles.healthDetails}>
+                      {meal.health_score_details || (meal.ai_response && meal.ai_response.health_score_details)}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {(meal.meal_details || (meal.ai_response && meal.ai_response.meal_details)) && (
+                <View style={styles.mealDetailsContainer}>
+                  <Text style={styles.sectionTitle}>Meal Breakdown</Text>
+                  <Text style={styles.mealDetailsText}>
+                    {meal.meal_details || (meal.ai_response && meal.ai_response.meal_details)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Bottom Buttons */}
           <View style={styles.bottomButtons}>
             <TouchableOpacity 
@@ -988,5 +1032,50 @@ const styles = StyleSheet.create({
   timeContainer: {
     padding: 4,
     borderRadius: 12,
+  },
+  detailsSection: {
+    marginBottom: 24,
+  },
+  healthScoreContainer: {
+    backgroundColor: '#F8F8F8',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  healthScoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  scoreIndicator: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  scoreText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  healthDetails: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#333',
+  },
+  mealDetailsContainer: {
+    backgroundColor: '#F8F8F8',
+    borderRadius: 16,
+    padding: 16,
+  },
+  mealDetailsText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#333',
   },
 });
