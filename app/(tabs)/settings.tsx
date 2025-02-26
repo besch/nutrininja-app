@@ -138,7 +138,7 @@ export default function SettingsScreen() {
             <ShimmerPlaceholder style={styles.shimmerIcon} width={24} height={24} />
           </View>
 
-          <Text style={styles.version}>VERSION 1.0.6</Text>
+          <Text style={styles.version}>VERSION 1.0.7</Text>
         </ScrollView>
       </SafeAreaView>
     );
