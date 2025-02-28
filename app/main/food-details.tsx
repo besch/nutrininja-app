@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { Text } from "@rneui/themed";
 import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
-import { Feather, FontAwesome6 } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
+import { Feather, FontAwesome6, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import NumericInputOverlay from "@/components/overlays/NumericInputOverlay";
 import BaseOverlay from "@/components/overlays/BaseOverlay";
@@ -20,7 +19,6 @@ import type { Meal } from "@/types";
 import { trackMealAnalysis } from '@/utils/appsFlyerEvents';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from "@expo/vector-icons";
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
