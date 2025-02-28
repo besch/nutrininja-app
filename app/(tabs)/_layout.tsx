@@ -31,6 +31,7 @@ export default function TabLayout() {
           name="index"
           options={{
             title: "Home",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Icon name="home" type="feather" color={color} size={size} />
             ),
@@ -40,6 +41,7 @@ export default function TabLayout() {
           name="analytics"
           options={{
             title: "Analytics",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Icon name="bar-chart-2" type="feather" color={color} size={size} />
             ),
@@ -49,6 +51,7 @@ export default function TabLayout() {
           name="settings"
           options={{
             title: "Settings",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Icon name="settings" type="feather" color={color} size={size} />
             ),
@@ -58,6 +61,7 @@ export default function TabLayout() {
           name="empty"
           options={{
             title: "",
+            headerShown: false,
             tabBarIcon: () => null,
             tabBarButton: () => null
           }}
