@@ -18,7 +18,7 @@ import { Platform } from "react-native";
 import { supabase } from "@/utils/supabase";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initializeAllSDKs } from '@/utils/sdkInit';
-import GoMarketMe from 'gomarketme-react-native-expo';
+// import GoMarketMe from 'gomarketme-react-native-expo';
 import { registerForPushNotificationsAsync } from '@/utils/notifications';
 import * as Notifications from 'expo-notifications';
 
@@ -52,7 +52,7 @@ function AppContent() {
 
   useEffect(() => {
     initializeAllSDKs();
-    GoMarketMe.initialize(process.env.EXPO_PUBLIC_GOMARKETME_API_KEY as string);
+    // GoMarketMe.initialize(process.env.EXPO_PUBLIC_GOMARKETME_API_KEY as string);
   }, []);
 
   // useEffect(() => {
