@@ -55,10 +55,19 @@ export default function FoodDetailsScreen() {
   const isAnalyzing = meal?.analysis_status === "pending";
   const analysisFailed = meal?.analysis_status === "failed";
 
+  // Ensure numeric values are properly converted to numbers
+  const mealData = meal ? {
+    ...meal,
+    calories: typeof meal.calories === 'string' ? parseInt(meal.calories) : meal.calories,
+    proteins: typeof meal.proteins === 'string' ? parseInt(meal.proteins) : meal.proteins,
+    carbs: typeof meal.carbs === 'string' ? parseInt(meal.carbs) : meal.carbs,
+    fats: typeof meal.fats === 'string' ? parseInt(meal.fats) : meal.fats,
+  } : null;
+
   const updateMealMutation = useMutation({
     mutationFn: (updates: Partial<Meal>) => {
-      if (!meal) throw new Error('No meal found');
-      return api.meals.updateMeal(meal.id, updates);
+      if (!mealData) throw new Error('No meal found');
+      return api.meals.updateMeal(mealData.id, updates);
     },
     onSuccess: (updatedMeal) => {
       dispatch(updateMealInStore(updatedMeal));
@@ -100,32 +109,32 @@ export default function FoodDetailsScreen() {
 
   const analyzeMealMutation = useMutation({
     mutationFn: () => {
-      if (!meal) throw new Error('No meal found');
-      return api.meals.analyzeMeal(meal.image_url, meal.id);
+      if (!mealData) throw new Error('No meal found');
+      return api.meals.analyzeMeal(mealData.image_url, mealData.id);
     },
     onSuccess: (analysis: Partial<Meal>) => {
       setAnalysisResults(analysis);
       setShowAnalysisResults(true);
-      if (meal) {
-        trackMealAnalysis(true, meal.id);
-        const analysisMealDate = moment(meal.date).format('YYYY-MM-DD');
+      if (mealData) {
+        trackMealAnalysis(true, mealData.id);
+        const analysisMealDate = moment(mealData.date).format('YYYY-MM-DD');
         queryClient.invalidateQueries({ queryKey: ['meals', analysisMealDate] });
       }
     },
     onError: (error) => {
-      if (meal) {
-        trackMealAnalysis(false, meal.id);
+      if (mealData) {
+        trackMealAnalysis(false, mealData.id);
       }
     }
   });
 
   const deleteMealMutation = useMutation({
     mutationFn: () => {
-      if (!meal) throw new Error('No meal found');
-      return api.meals.deleteMeal(meal.id);
+      if (!mealData) throw new Error('No meal found');
+      return api.meals.deleteMeal(mealData.id);
     },
     onSuccess: () => {
-      const mealDate = moment(meal.date).format('YYYY-MM-DD');
+      const mealDate = moment(mealData.date).format('YYYY-MM-DD');
       queryClient.invalidateQueries({ queryKey: ['meals', mealDate] });
       queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
       queryClient.invalidateQueries({ queryKey: ['progress', mealDate] });
@@ -162,15 +171,15 @@ export default function FoodDetailsScreen() {
   const handleEditMacro = (
     type: "calories" | "proteins" | "carbs" | "fats"
   ) => {
-    if (!meal) return;
-    setEditingMacro({ type, value: meal[type] });
+    if (!mealData) return;
+    setEditingMacro({ type, value: mealData[type] });
   };
 
   const handleSaveMacro = async (value: number) => {
-    if (!editingMacro || !meal) return;
+    if (!editingMacro || !mealData) return;
 
     const updates = {
-      ...meal,
+      ...mealData,
       [editingMacro.type]: value
     };
 
@@ -179,7 +188,7 @@ export default function FoodDetailsScreen() {
   };
 
   const handleFixResults = () => {
-    if (!meal) return;
+    if (!mealData) return;
     analyzeMealMutation.mutate(undefined, {
       onSuccess: (analysis) => {
         if (analysis) {
@@ -194,10 +203,10 @@ export default function FoodDetailsScreen() {
   };
 
   const handleConfirmAnalysis = async () => {
-    if (!meal || !analysisResults) return;
+    if (!mealData || !analysisResults) return;
     try {
       await updateMealMutation.mutateAsync(analysisResults);
-      const confirmMealDate = moment(meal.date).format('YYYY-MM-DD');
+      const confirmMealDate = moment(mealData.date).format('YYYY-MM-DD');
       queryClient.invalidateQueries({ queryKey: ['meal', id] });
       queryClient.invalidateQueries({ queryKey: ['meals', confirmMealDate] });
       queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
@@ -420,21 +429,21 @@ export default function FoodDetailsScreen() {
           <View style={styles.imageContainer}>
             <Image
               source={{ 
-                uri: meal.image_url,
+                uri: mealData.image_url,
                 cache: 'force-cache'
               }}
               style={styles.foodImage}
               onLoadStart={() => {
-                if (!hasLoadedImageRef.current[meal.image_url]) {
+                if (!hasLoadedImageRef.current[mealData.image_url]) {
                   setIsImageLoading(true);
                 }
               }}
               onLoadEnd={() => {
                 setIsImageLoading(false);
-                hasLoadedImageRef.current[meal.image_url] = true;
+                hasLoadedImageRef.current[mealData.image_url] = true;
               }}
             />
-            {isImageLoading && !hasLoadedImageRef.current[meal.image_url] && (
+            {isImageLoading && !hasLoadedImageRef.current[mealData.image_url] && (
               <View style={styles.imageLoadingContainer}>
                 <LoadingSpinner />
               </View>
@@ -455,9 +464,9 @@ export default function FoodDetailsScreen() {
                 <View style={styles.errorContainer}>
                   <Feather name="alert-circle" size={16} color="#FF6B6B" />
                   <Text style={styles.errorText}>
-                    {meal.error_message === 'NO_FOOD_DETECTED' 
+                    {mealData.error_message === 'NO_FOOD_DETECTED' 
                       ? "No food detected in image"
-                      : meal.error_message || "Analysis failed"}
+                      : mealData.error_message || "Analysis failed"}
                   </Text>
                 </View>
               ) : (
@@ -470,7 +479,7 @@ export default function FoodDetailsScreen() {
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {meal.name}
+                    {mealData.name}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -488,7 +497,7 @@ export default function FoodDetailsScreen() {
                 />
               </TouchableOpacity>
               <Text style={styles.timestamp}>
-                {moment(meal.created_at).format("hh:mm A")}
+                {moment(mealData.created_at).format("hh:mm A")}
               </Text>
             </View>
           </View>
@@ -508,7 +517,7 @@ export default function FoodDetailsScreen() {
                     height={24}
                   />
                 ) : (
-                  <Text style={styles.macroValue}>{meal.calories}</Text>
+                  <Text style={styles.macroValue}>{mealData.calories}</Text>
                 )}
               </View>
               <TouchableOpacity
@@ -534,7 +543,7 @@ export default function FoodDetailsScreen() {
                     height={24}
                   />
                 ) : (
-                  <Text style={styles.macroValue}>{meal.carbs}g</Text>
+                  <Text style={styles.macroValue}>{mealData.carbs}g</Text>
                 )}
               </View>
               <TouchableOpacity
@@ -560,7 +569,7 @@ export default function FoodDetailsScreen() {
                     height={24}
                   />
                 ) : (
-                  <Text style={styles.macroValue}>{meal.proteins}g</Text>
+                  <Text style={styles.macroValue}>{mealData.proteins}g</Text>
                 )}
               </View>
               <TouchableOpacity
@@ -586,7 +595,7 @@ export default function FoodDetailsScreen() {
                     height={24}
                   />
                 ) : (
-                  <Text style={styles.macroValue}>{meal.fats}g</Text>
+                  <Text style={styles.macroValue}>{mealData.fats}g</Text>
                 )}
               </View>
               <TouchableOpacity
@@ -599,42 +608,42 @@ export default function FoodDetailsScreen() {
             </View>
           </View>
 
-          {!isAnalyzing && !analysisFailed && meal && (
+          {!isAnalyzing && !analysisFailed && mealData && (
             <View style={styles.detailsSection}>
               {/* Check both direct properties and nested ai_response properties */}
-              {(meal.health_score !== undefined || (meal.ai_response && meal.ai_response.health_score !== undefined)) && (
+              {(mealData.health_score !== undefined || (mealData.ai_response && mealData.ai_response.health_score !== undefined)) && (
                 <View style={styles.healthScoreContainer}>
                   <View style={styles.healthScoreHeader}>
                     <Text style={styles.sectionTitle}>Health Score</Text>
                     <View style={[
                       styles.scoreIndicator, 
                       {backgroundColor: 
-                        (meal.health_score || (meal.ai_response && meal.ai_response.health_score) || 0) >= 7 
+                        (mealData.health_score || (mealData.ai_response && mealData.ai_response.health_score) || 0) >= 7 
                         ? '#4CD964' 
-                        : (meal.health_score || (meal.ai_response && meal.ai_response.health_score) || 0) >= 4 
+                        : (mealData.health_score || (mealData.ai_response && mealData.ai_response.health_score) || 0) >= 4 
                           ? '#FF9500' 
                           : '#FF3B30'
                       }
                     ]}>
                       <Text style={styles.scoreText}>
-                        {meal.health_score || (meal.ai_response && meal.ai_response.health_score) || 0}/10
+                        {mealData.health_score || (mealData.ai_response && mealData.ai_response.health_score) || 0}/10
                       </Text>
                     </View>
                   </View>
                   
-                  {(meal.health_score_details || (meal.ai_response && meal.ai_response.health_score_details)) && (
+                  {(mealData.health_score_details || (mealData.ai_response && mealData.ai_response.health_score_details)) && (
                     <Text style={styles.healthDetails}>
-                      {meal.health_score_details || (meal.ai_response && meal.ai_response.health_score_details)}
+                      {mealData.health_score_details || (mealData.ai_response && mealData.ai_response.health_score_details)}
                     </Text>
                   )}
                 </View>
               )}
 
-              {(meal.meal_details || (meal.ai_response && meal.ai_response.meal_details)) && (
+              {(mealData.meal_details || (mealData.ai_response && mealData.ai_response.meal_details)) && (
                 <View style={styles.mealDetailsContainer}>
                   <Text style={styles.sectionTitle}>Meal Breakdown</Text>
                   <Text style={styles.mealDetailsText}>
-                    {meal.meal_details || (meal.ai_response && meal.ai_response.meal_details)}
+                    {mealData.meal_details || (mealData.ai_response && mealData.ai_response.meal_details)}
                   </Text>
                 </View>
               )}
@@ -707,7 +716,7 @@ export default function FoodDetailsScreen() {
         }}
         onConfirm={handleConfirmAnalysis}
         isLoading={updateMealMutation.isPending}
-        currentMeal={meal}
+        currentMeal={mealData}
         newAnalysis={analysisResults || undefined}
       />
 
@@ -717,7 +726,7 @@ export default function FoodDetailsScreen() {
         title="Meal Name"
         onSave={() => setShowFullName(false)}
       >
-        <Text style={styles.fullNameText}>{meal.name}</Text>
+        <Text style={styles.fullNameText}>{mealData.name}</Text>
       </BaseOverlay>
     </View>
   );
