@@ -52,8 +52,6 @@ export default function FoodDetailsScreen() {
     },
   });
 
-  console.log(meal);
-
   const isAnalyzing = meal?.analysis_status === "pending";
   const analysisFailed = meal?.analysis_status === "failed";
 
