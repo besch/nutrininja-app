@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { DailyProgressResponse } from '@/types';
+import { Platform } from 'react-native';
 
 type ApiOptions = RequestInit & {
   requireAuth?: boolean;
@@ -8,9 +9,19 @@ type ApiOptions = RequestInit & {
 
 async function fetchApi(path: string, options: ApiOptions = {}) {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  // Don't set Content-Type for multipart/form-data as the browser/RN will set it with the boundary
+  const isMultipartFormData = options.body instanceof FormData;
+  
+  if (!isMultipartFormData) {
+    headers['Content-Type'] = 'application/json';
+  } else {
+    // For multipart/form-data, we need to remove the Content-Type header
+    // as React Native will set it with the correct boundary
+    delete headers['Content-Type'];
+  }
 
   // Only add auth header if required (default is true)
   if (options.requireAuth !== false) {
@@ -144,21 +155,47 @@ export const api = {
 
     createMealWithoutAnalysis: async (imageUri: string, selectedDate?: string, timestamp?: string) => {
       const formData = new FormData();
-      formData.append('image', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'meal.jpg',
-      } as any);
-      if (selectedDate) formData.append('date', selectedDate);
+      
+      // Handle file URI for both iOS and Android
+      const filename = imageUri.split('/').pop() || 'meal.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1].toLowerCase()}` : 'image/jpeg';
+      
+      // For Android content:// URIs, we need to ensure they're handled properly
+      let fileUri = imageUri;
+      
+      // On Android, ensure we're using the right URI format
+      if (Platform.OS === 'android') {
+        // If it's a content URI, we keep it as is
+        // If it's a file URI without the file:// prefix, add it
+        if (!imageUri.startsWith('content://') && !imageUri.startsWith('file://')) {
+          fileUri = `file://${imageUri}`;
+        }
+      }
+      
+      const fileToUpload = {
+        uri: fileUri,
+        type,
+        name: filename,
+      };
+      
+      formData.append('image', fileToUpload as any);
+      
+      if (selectedDate) {
+        formData.append('date', selectedDate);
+      }
+      
       if (timestamp) formData.append('timestamp', timestamp);
 
-      return fetchApi("/api/meals/save", {
-        method: "POST",
-        body: formData,
-        headers: {
-          'Accept': 'application/json'
-        },
-      });
+      try {
+        return await fetchApi("/api/meals/save", {
+          method: "POST",
+          body: formData,
+        });
+      } catch (error) {
+        console.error('Error uploading meal image:', error);
+        throw error;
+      }
     },
 
     triggerAnalysis: async (mealId: string) => {

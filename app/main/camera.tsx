@@ -77,7 +77,7 @@ export const CameraScreen = () => {
       router.back();
 
       // Track successful meal addition
-      trackMealAdded(true, 'camera');
+      trackMealAdded(true, 'gallery');
 
       // Start analysis in background
       api.meals.triggerAnalysis(mealId).then(() => {
@@ -101,7 +101,7 @@ export const CameraScreen = () => {
         [{ text: "OK" }]
       );
       // Track failed meal addition
-      trackMealAdded(false, 'camera');
+      trackMealAdded(false, 'gallery');
     }
   });
 
@@ -128,17 +128,33 @@ export const CameraScreen = () => {
     if (createMealMutation.isPending) return;
 
     try {
+      // Request media library permissions first
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          "Permission Required", 
+          "Please grant access to your photo library to select images.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images",
-        base64: true,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+        base64: false,
         exif: true,
       });
 
-      if (!result.canceled) {
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+
         // Show loading state immediately
-        setProcessingPhoto({ uri: result.assets[0].uri });
+        setProcessingPhoto({ uri: selectedImage.uri });
         
-        const photoWithTimestamp = await processImage(result.assets[0].uri, selectedDate);
+        const photoWithTimestamp = await processImage(selectedImage.uri, selectedDate);
         createMealMutation.mutate(photoWithTimestamp);
       }
     } catch (error) {
