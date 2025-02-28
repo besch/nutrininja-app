@@ -255,8 +255,6 @@ export default function FoodDetailsScreen() {
             <View style={styles.imageContainer}>
               <ShimmerPlaceholder
                 style={[styles.foodImage, { borderRadius: 0 }]}
-                width={'100%'}
-                height={'100%'}
               />
             </View>
           </View>
