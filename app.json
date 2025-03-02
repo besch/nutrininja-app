@@ -42,11 +42,7 @@
       }
     },
     "android": {
-      "package": "com.vino.nutrininja",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+      "package": "com.vino.nutrininja"
     },
     "web": {
       "bundler": "metro",
