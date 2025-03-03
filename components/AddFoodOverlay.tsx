@@ -42,11 +42,6 @@ const menuOptions = [
   },
 ];
 
-interface SavedFoodsGridProps {
-  onClose: () => void;
-  selectedDate: string;
-}
-
 export function AddFoodOverlay({ visible, onClose }: AddFoodOverlayProps) {
   const router = useRouter();
   const selectedDate = useSelectedDate();

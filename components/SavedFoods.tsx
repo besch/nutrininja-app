@@ -9,7 +9,7 @@ import {
   Pressable,
 } from "react-native";
 import { Text } from "@rneui/themed";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Meal } from "@/types";
@@ -32,7 +32,7 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = (screenWidth - 74 - (GRID_COLUMNS - 1) * 8) / GRID_COLUMNS;
+  const itemSize = (screenWidth - 74 - (GRID_COLUMNS - 1) * 16) / GRID_COLUMNS;
 
   const { data: savedMeals, isLoading } = useQuery({
     queryKey: ['bookmarked-meals'],
@@ -53,9 +53,22 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
     },
   });
 
+  const toggleBookmarkMutation = useMutation({
+    mutationFn: (mealId: string) => api.meals.toggleBookmark(mealId),
+    onSuccess: (isBookmarked, mealId) => {
+      queryClient.setQueryData(['meal-bookmarked', mealId], isBookmarked);
+      queryClient.invalidateQueries({ queryKey: ['bookmarked-meals'] });
+    },
+  });
+
   const handleMealSelect = (meal: Meal) => {
     onClose();
     cloneMealMutation.mutate(meal);
+  };
+
+  const handleUnbookmark = (e: any, meal: Meal) => {
+    e.stopPropagation();
+    toggleBookmarkMutation.mutate(meal.id);
   };
 
   const gridData = useMemo(() => {
@@ -123,6 +136,17 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
           style={styles.gridImage}
           resizeMode="cover"
         />
+        <TouchableOpacity 
+          style={styles.unbookmarkButton}
+          onPress={(e) => handleUnbookmark(e, item)}
+          disabled={toggleBookmarkMutation.isPending}
+        >
+          <Ionicons 
+            name="close" 
+            size={16} 
+            color={toggleBookmarkMutation.isPending ? "#999" : "#000"} 
+          />
+        </TouchableOpacity>
       </TouchableOpacity>
     );
   };
@@ -148,21 +172,22 @@ export function SavedFoods({ onClose, selectedDate }: SavedFoodsProps) {
 const styles = StyleSheet.create({
   gridContainer: {
     padding: 16,
-    gap: 8,
+    gap: 16,
   },
   gridContainerFixed: {
     flexGrow: 0,
   },
   gridItem: {
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: 16,
+    marginBottom: 16,
     borderRadius: 8,
-    overflow: 'hidden',
+    position: 'relative',
   },
   gridImage: {
     width: '100%',
     height: '100%',
     borderRadius: 8,
+    overflow: 'hidden',
   },
   emptyContainer: {
     flex: 1,
@@ -174,5 +199,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 12,
+  },
+  unbookmarkButton: {
+    position: 'absolute',
+    top: -12,
+    right: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000',
   },
 }); 
