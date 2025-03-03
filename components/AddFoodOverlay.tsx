@@ -8,7 +8,7 @@ import {
   Animated,
 } from "react-native";
 import { Text } from "@rneui/themed";
-import { Feather, FontAwesome } from "@expo/vector-icons";
+import { Feather, FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCameraPermissions } from "expo-camera";
 import { useSelectedDate } from '@/store/userSlice';
@@ -23,22 +23,22 @@ const menuOptions = [
   {
     id: "exercise",
     title: "Log Exercise",
-    icon: <Feather name="activity" size={24} color="#000" />,
+    icon: <Ionicons name="fitness" size={24} color="black" />,
   },
   {
     id: "saved",
     title: "Saved foods",
-    icon: <FontAwesome name="bookmark" size={24} color="#000" />,
+    icon: <FontAwesome name="bookmark" size={24} color="black" />,
   },
   {
     id: "barcode",
     title: "Scan barcode",
-    icon: <Feather name="maximize" size={24} color="#000" />,
+    icon: <MaterialCommunityIcons name="barcode-scan" size={24} color="black" />,
   },
   {
     id: "scan",
     title: "Scan food",
-    icon: <Feather name="camera" size={24} color="#000" />,
+    icon: <FontAwesome name="camera" size={24} color="black" />,
   },
 ];
 
