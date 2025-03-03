@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
+import { View, StyleSheet, Image, TouchableOpacity, ScrollView, RefreshControl, Alert } from "react-native";
 import { Text } from "@rneui/themed";
 import { useRouter, useLocalSearchParams, useNavigation } from "expo-router";
 import { Feather, FontAwesome6, FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -133,11 +133,26 @@ export default function FoodDetailsScreen() {
     },
     onSuccess: () => {
       const mealDate = moment(mealData.date).format('YYYY-MM-DD');
+      
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ['meals', mealDate] });
       queryClient.invalidateQueries({ queryKey: ['meals-summary'] });
       queryClient.invalidateQueries({ queryKey: ['progress', mealDate] });
+      queryClient.invalidateQueries({ queryKey: ['bookmarked-meals'] });
+      
       router.back();
     },
+    onError: (error) => {
+      // If deletion fails, show error message but still allow retry
+      setShowDeleteConfirm(false);
+      Alert.alert(
+        'Error',
+        'Failed to delete meal. Please try again.',
+        [
+          { text: 'OK' }
+        ]
+      );
+    }
   });
 
   const { data: isBookmarked = false } = useQuery({
