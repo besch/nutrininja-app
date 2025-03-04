@@ -378,7 +378,6 @@ export default function FoodDetailsScreen() {
             <View style={styles.bottomButtons}>
               <View style={[styles.fixButton, styles.disabledButton]}>
                 <View style={styles.fixButtonContent}>
-                  <Feather name="cpu" size={20} color="#999" />
                   <FontAwesome6 name="robot" size={20} color="#999" />
                   <Text style={[styles.fixButtonText, styles.disabledText]}>
                     Fix Results
@@ -673,8 +672,8 @@ export default function FoodDetailsScreen() {
                   <LoadingDots color="#000" size={5} />
                 ) : (
                   <>
-                    <Feather 
-                      name="cpu" 
+                    <FontAwesome6 
+                      name="robot" 
                       size={20} 
                       color={isAnalyzing ? "#999" : "#000"} 
                     />
