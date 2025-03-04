@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  StyleSheet,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -51,7 +50,7 @@ export default function NumericInputOverlay({
       case 'kg':
         return 300;
       default:
-        return 999;
+        return 9999;
     }
   };
 
