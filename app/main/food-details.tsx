@@ -668,25 +668,25 @@ export default function FoodDetailsScreen() {
               onPress={handleFixResults}
               disabled={isAnalyzing || analyzeMealMutation.isPending}
             >
-              {analyzeMealMutation.isPending ? (
-                <View style={styles.fixButtonContent}>
+              <View style={styles.fixButtonContent}>
+                {analyzeMealMutation.isPending ? (
                   <LoadingDots color="#000" size={5} />
-                </View>
-              ) : (
-                <View style={styles.fixButtonContent}>
-                  <Feather 
-                    name="cpu" 
-                    size={20} 
-                    color={isAnalyzing ? "#999" : "#000"} 
-                  />
-                  <Text style={[
-                    styles.fixButtonText, 
-                    isAnalyzing && styles.disabledText
-                  ]}>
-                    Fix Results
-                  </Text>
-                </View>
-              )}
+                ) : (
+                  <>
+                    <Feather 
+                      name="cpu" 
+                      size={20} 
+                      color={isAnalyzing ? "#999" : "#000"} 
+                    />
+                    <Text style={[
+                      styles.fixButtonText, 
+                      isAnalyzing && styles.disabledText
+                    ]}>
+                      Fix Results
+                    </Text>
+                  </>
+                )}
+              </View>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.doneButton}
@@ -898,28 +898,30 @@ const styles = StyleSheet.create({
   },
   fixButton: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    height: 52,
     backgroundColor: "#F8F8F8",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
     borderRadius: 30,
     borderWidth: 1,
     borderColor: "black",
+    justifyContent: "center",
+  },
+  fixButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   fixButtonText: {
-    marginLeft: 8,
     fontSize: 16,
     fontWeight: "500",
     color: "#000",
   },
   doneButton: {
     flex: 1,
+    height: 52,
     backgroundColor: "black",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
     borderRadius: 30,
+    justifyContent: "center",
     alignItems: "center",
   },
   doneButtonText: {
@@ -1043,11 +1045,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fixButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   timeContainer: {
     padding: 4,
