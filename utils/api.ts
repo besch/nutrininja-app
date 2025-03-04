@@ -78,6 +78,7 @@ export const api = {
     deleteAccount: async () => {
       return fetchApi('/api/user/profile', {
         method: 'DELETE',
+        body: JSON.stringify({ cascade: true }),
       });
     },
   },
