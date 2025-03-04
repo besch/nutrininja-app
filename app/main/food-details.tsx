@@ -766,7 +766,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1,
-    paddingTop: 60,
+    paddingTop: 40,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
@@ -874,7 +874,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   macroValue: {
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: "600",
     lineHeight: 24,
   },
