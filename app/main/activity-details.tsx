@@ -337,9 +337,9 @@ export default function ActivityDetailsScreen() {
         </ScrollView>
         
         <TouchableOpacity
-          style={[styles.addButton, (isDataLoading || !isValid || !description.trim()) && styles.addButtonDisabled]}
+          style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
           onPress={handleSave}
-          disabled={isDataLoading || !isValid || !description.trim() || isLoading}
+          disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
         >
           {isLoading ? (
             <View style={styles.buttonContent}>
@@ -542,9 +542,9 @@ export default function ActivityDetailsScreen() {
       </ScrollView>
       
       <TouchableOpacity
-        style={[styles.addButton, (isDataLoading || !isValid) && styles.addButtonDisabled]}
+        style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
         onPress={handleSave}
-        disabled={isDataLoading || !isValid || isLoading}
+        disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
       >
         {isLoading ? (
           <View style={styles.buttonContent}>
