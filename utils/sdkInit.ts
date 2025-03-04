@@ -32,7 +32,6 @@ export const initializeAppsFlyer = () => {
   appsFlyer.initSdk(
     appsFlyerConfig,
     (result) => {
-      console.log('AppsFlyer initialization successful:', result);
       appsFlyer.startSdk();
     },
     (error) => {
