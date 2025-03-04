@@ -302,7 +302,7 @@ export default function ActivityDetailsScreen() {
                   ) : (
                     <View style={styles.aiButtonContent}>
                       <FontAwesome6 name="robot" size={18} color="#fff" style={styles.aiButtonIcon} />
-                      <Text style={styles.aiButtonText}>Created by AI</Text>
+                      <Text style={styles.aiButtonText}>Analyze with AI</Text>
                     </View>
                   )}
                 </TouchableOpacity>
