@@ -137,7 +137,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, marginTop: 40 }}>
+    <GestureHandlerRootView style={{ flex: 1, marginTop: Platform.OS === 'ios' ? 40 : 0 }}>
       <Provider store={store}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
