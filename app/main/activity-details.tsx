@@ -542,9 +542,12 @@ export default function ActivityDetailsScreen() {
       </ScrollView>
       
       <TouchableOpacity
-        style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
+        style={[
+          styles.addButton, 
+          (isDataLoading || !isValid) && styles.addButtonDisabled
+        ]}
         onPress={handleSave}
-        disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
+        disabled={isDataLoading || !isValid}
       >
         {isLoading ? (
           <View style={styles.buttonContent}>
