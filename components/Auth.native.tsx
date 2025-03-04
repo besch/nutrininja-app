@@ -15,9 +15,11 @@ interface AuthProps {
 
 export function Auth({ onAuthSuccess }: AuthProps) {
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
-    });
+    if (Platform.OS === 'android') {
+      GoogleSignin.configure({
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+      });
+    }
   }, []);
 
   const handleGoogleSignIn = async () => {
@@ -112,7 +114,7 @@ export function Auth({ onAuthSuccess }: AuthProps) {
                 onAuthSuccess?.(user)
               }
             }
-          } catch (e: unknown) {
+          } catch (e: any) {
             if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_REQUEST_CANCELED') {
               console.log('Sign in canceled')
             } else {
