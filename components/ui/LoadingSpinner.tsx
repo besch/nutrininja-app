@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import { LoadingDots } from './LoadingDots';
 
 export default function LoadingSpinner() {
   const [spinAnim] = useState(new Animated.Value(0));
@@ -19,6 +20,14 @@ export default function LoadingSpinner() {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg']
   });
+
+  if (Platform.OS === 'android') {
+    return (
+      <View style={styles.loadingOverlay}>
+        <LoadingDots color="#000000" size={6} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.loadingOverlay}>
