@@ -277,7 +277,7 @@ export default function FoodDetailsScreen() {
               <View style={styles.titleContainer}>
                 <ShimmerPlaceholder
                   style={styles.shimmerName}
-                  width={200}
+                  width={120}
                   height={28}
                 />
               </View>
@@ -468,7 +468,7 @@ export default function FoodDetailsScreen() {
               {isAnalyzing ? (
                 <ShimmerPlaceholder
                   style={styles.shimmerName}
-                  width={200}
+                  width={120}
                   height={28}
                 />
               ) : analysisFailed ? (
@@ -524,7 +524,7 @@ export default function FoodDetailsScreen() {
                 {isAnalyzing ? (
                   <ShimmerPlaceholder
                     style={styles.shimmerMacro}
-                    width={60}
+                    width={45}
                     height={24}
                   />
                 ) : (
@@ -550,7 +550,7 @@ export default function FoodDetailsScreen() {
                 {isAnalyzing ? (
                   <ShimmerPlaceholder
                     style={styles.shimmerMacro}
-                    width={60}
+                    width={35}
                     height={24}
                   />
                 ) : (
@@ -576,7 +576,7 @@ export default function FoodDetailsScreen() {
                 {isAnalyzing ? (
                   <ShimmerPlaceholder
                     style={styles.shimmerMacro}
-                    width={60}
+                    width={35}
                     height={24}
                   />
                 ) : (
@@ -602,7 +602,7 @@ export default function FoodDetailsScreen() {
                 {isAnalyzing ? (
                   <ShimmerPlaceholder
                     style={styles.shimmerMacro}
-                    width={60}
+                    width={35}
                     height={24}
                   />
                 ) : (
@@ -1033,6 +1033,8 @@ const styles = StyleSheet.create({
   shimmerMacro: {
     borderRadius: 6,
     marginTop: 2,
+    width: 45,
+    height: 24,
   },
   bookmarkButton: {
     width: 36,
