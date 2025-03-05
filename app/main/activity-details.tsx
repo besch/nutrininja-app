@@ -242,100 +242,100 @@ export default function ActivityDetailsScreen() {
 
   if (activityId === 'custom') {
     return (
-        <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-              <Feather name="arrow-left" size={24} color="black" />
-            </TouchableOpacity>
-            
-            <View style={styles.header}>
-              <MaterialCommunityIcons name="pencil-outline" size={24} color="black" />
-              <Text style={styles.headerTitle}>Describe Exercise</Text>
-            </View>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+            <Feather name="arrow-left" size={24} color="black" />
+          </TouchableOpacity>
           
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.descriptionContainer}>
-              {isDataLoading ? (
-                <>
-                  <ShimmerPlaceholder style={[styles.descriptionInput, { minHeight: 120 }]} />
-                  <ShimmerPlaceholder style={[styles.aiButton, { marginTop: 16, alignSelf: 'flex-start', height: 48 }]} />
-                </>
-              ) : (
-                <>
-                  <TextInput
-                    style={styles.descriptionInput}
-                    placeholder="Describe workout time, intensity, etc."
-                    value={description}
-                    onChangeText={(text) => setDescription(text)}
-                    multiline
-                    numberOfLines={4}
-                    autoFocus={Platform.OS === 'ios' ? !activityToEditId : false}
-                  />
-                  
-                  <TouchableOpacity 
-                    style={[
-                      styles.aiButton, 
-                      !description.trim() && styles.aiButtonDisabled
-                    ]}
-                    onPress={analyzeDescription}
-                    disabled={!description.trim() || isAnalyzing}
-                  >
-                    {isAnalyzing ? (
-                      <View style={styles.aiButtonContent}>
-                        <ActivityIndicator color="#fff" size="small" />
-                      </View>
-                    ) : (
-                      <View style={styles.aiButtonContent}>
-                        <FontAwesome6 name="robot" size={18} color="#fff" />
-                        <Text style={styles.aiButtonText}>Analyze with AI</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </>
-              )}
-              
-              {aiResult && (
-                <View style={styles.aiResultContainer}>
-                  <Text style={styles.aiResultTitle}>AI Analysis</Text>
-                  <Text style={styles.aiResultText}>
-                    Activity: {aiResult.activityType}
-                  </Text>
-                  <Text style={styles.aiResultText}>
-                    Duration: {aiResult.durationMinutes} minutes
-                  </Text>
-                  <Text style={styles.aiResultText}>
-                    Intensity: {aiResult.intensity}
-                  </Text>
-                  <Text style={styles.aiResultText}>
-                    Calories: {Math.round(aiResult.caloriesBurned)} kcal
-                  </Text>
-                </View>
-              )}
-              
-              <View style={styles.exampleContainer}>
-                <Text style={styles.exampleTitle}>Example:</Text>
-                <Text style={styles.exampleText}>
-                  Hiked a steep trail for 1 hour, lungs and legs burned
+          <View style={styles.header}>
+            <MaterialCommunityIcons name="pencil-outline" size={24} color="black" />
+            <Text style={styles.headerTitle}>Describe Exercise</Text>
+          </View>
+        </View>
+        
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.descriptionContainer}>
+            {isDataLoading ? (
+              <>
+                <ShimmerPlaceholder style={[styles.descriptionInput, { minHeight: 120 }]} />
+                <ShimmerPlaceholder style={[styles.aiButton, { marginTop: 16, alignSelf: 'flex-start', height: 48 }]} />
+              </>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.descriptionInput}
+                  placeholder="Describe workout time, intensity, etc."
+                  value={description}
+                  onChangeText={(text) => setDescription(text)}
+                  multiline
+                  numberOfLines={4}
+                  autoFocus={Platform.OS === 'ios' ? !activityToEditId : false}
+                />
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.aiButton, 
+                    !description.trim() && styles.aiButtonDisabled
+                  ]}
+                  onPress={analyzeDescription}
+                  disabled={!description.trim() || isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <View style={styles.aiButtonContent}>
+                      <ActivityIndicator color="#fff" size="small" />
+                    </View>
+                  ) : (
+                    <View style={styles.aiButtonContent}>
+                      <FontAwesome6 name="robot" size={18} color="#fff" />
+                      <Text style={styles.aiButtonText}>Analyze with AI</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+            
+            {aiResult && (
+              <View style={styles.aiResultContainer}>
+                <Text style={styles.aiResultTitle}>AI Analysis</Text>
+                <Text style={styles.aiResultText}>
+                  Activity: {aiResult.activityType}
+                </Text>
+                <Text style={styles.aiResultText}>
+                  Duration: {aiResult.durationMinutes} minutes
+                </Text>
+                <Text style={styles.aiResultText}>
+                  Intensity: {aiResult.intensity}
+                </Text>
+                <Text style={styles.aiResultText}>
+                  Calories: {Math.round(aiResult.caloriesBurned)} kcal
                 </Text>
               </View>
-            </View>
-          </ScrollView>
-          
-          <TouchableOpacity
-            style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
-            onPress={handleSave}
-            disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
-          >
-            {isLoading ? (
-              <View style={styles.buttonContent}>
-                <LoadingDots color="#fff" size={6} />
-              </View>
-            ) : (
-              <Text style={styles.addButtonText}>Add Exercise</Text>
             )}
-          </TouchableOpacity>
-        </View>
+            
+            <View style={styles.exampleContainer}>
+              <Text style={styles.exampleTitle}>Example:</Text>
+              <Text style={styles.exampleText}>
+                Hiked a steep trail for 1 hour, lungs and legs burned
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+        
+        <TouchableOpacity
+          style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
+          onPress={handleSave}
+          disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
+        >
+          {isLoading ? (
+            <View style={styles.buttonContent}>
+              <LoadingDots color="#fff" size={6} />
+            </View>
+          ) : (
+            <Text style={styles.addButtonText}>Add Exercise</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     );
   }
 
