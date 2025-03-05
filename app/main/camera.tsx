@@ -330,13 +330,16 @@ export const CameraScreen = () => {
         >
           <MaterialIcons name="close" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.infoButton, isLoading && styles.disabledButton]}
-          disabled={isLoading}
-          onPress={handleInfoPress}
-        >
-          <MaterialIcons name="info" size={24} color="white" />
-        </TouchableOpacity>
+        
+        {!isBarcodeMode && (
+          <TouchableOpacity 
+            style={[styles.infoButton, isLoading && styles.disabledButton]}
+            disabled={isLoading}
+            onPress={handleInfoPress}
+          >
+            <MaterialIcons name="info" size={24} color="white" />
+          </TouchableOpacity>
+        )}
 
         {processingPhoto ? (
           <View style={styles.processingContainer}>
@@ -368,29 +371,31 @@ export const CameraScreen = () => {
               )}
             </View>
 
-            <View style={styles.bottomContainer}>
-              <View style={styles.optionsContainer}>
-                <TouchableOpacity 
-                  style={[styles.option, isLoading && styles.disabledOption]} 
-                  onPress={handleScanFood}
-                  disabled={isLoading}
-                >
-                  <MaterialIcons name="camera-alt" size={24} color={isLoading ? "#999" : "black"} style={styles.optionIcon} />
-                  <Text style={[styles.optionText, isLoading && styles.disabledText]}>
-                    {isBarcodeMode ? "Scan Barcode" : "Scan Food"}
-                  </Text>
-                </TouchableOpacity>
+            {!isBarcodeMode && (
+              <View style={styles.bottomContainer}>
+                <View style={styles.optionsContainer}>
+                  <TouchableOpacity 
+                    style={[styles.option, isLoading && styles.disabledOption]} 
+                    onPress={handleScanFood}
+                    disabled={isLoading}
+                  >
+                    <MaterialIcons name="camera-alt" size={24} color={isLoading ? "#999" : "black"} style={styles.optionIcon} />
+                    <Text style={[styles.optionText, isLoading && styles.disabledText]}>
+                      {isBarcodeMode ? "Scan Barcode" : "Scan Food"}
+                    </Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity 
-                  style={[styles.option, isLoading && styles.disabledOption]} 
-                  onPress={handleGallery}
-                  disabled={isLoading}
-                >
-                  <MaterialIcons name="photo-library" size={24} color={isLoading ? "#999" : "black"} style={styles.optionIcon} />
-                  <Text style={[styles.optionText, isLoading && styles.disabledText]}>Gallery</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.option, isLoading && styles.disabledOption]} 
+                    onPress={handleGallery}
+                    disabled={isLoading}
+                  >
+                    <MaterialIcons name="photo-library" size={24} color={isLoading ? "#999" : "black"} style={styles.optionIcon} />
+                    <Text style={[styles.optionText, isLoading && styles.disabledText]}>Gallery</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
           </>
         )}
       </CameraView>
