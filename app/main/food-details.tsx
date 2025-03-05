@@ -662,31 +662,33 @@ export default function FoodDetailsScreen() {
 
           {/* Bottom Buttons */}
           <View style={styles.bottomButtons}>
-            <TouchableOpacity 
-              style={[styles.fixButton, isAnalyzing && styles.disabledButton]}
-              onPress={handleFixResults}
-              disabled={isAnalyzing || analyzeMealMutation.isPending}
-            >
-              <View style={styles.fixButtonContent}>
-                {analyzeMealMutation.isPending ? (
-                  <LoadingDots color="#000" size={5} />
-                ) : (
-                  <>
-                    <FontAwesome6 
-                      name="robot" 
-                      size={20} 
-                      color={isAnalyzing ? "#999" : "#000"} 
-                    />
-                    <Text style={[
-                      styles.fixButtonText, 
-                      isAnalyzing && styles.disabledText
-                    ]}>
-                      Fix Results
-                    </Text>
-                  </>
-                )}
-              </View>
-            </TouchableOpacity>
+            {!mealData.name.includes("(Barcode:") && (
+              <TouchableOpacity 
+                style={[styles.fixButton, isAnalyzing && styles.disabledButton]}
+                onPress={handleFixResults}
+                disabled={isAnalyzing || analyzeMealMutation.isPending}
+              >
+                <View style={styles.fixButtonContent}>
+                  {analyzeMealMutation.isPending ? (
+                    <LoadingDots color="#000" size={5} />
+                  ) : (
+                    <>
+                      <FontAwesome6 
+                        name="robot" 
+                        size={20} 
+                        color={isAnalyzing ? "#999" : "#000"} 
+                      />
+                      <Text style={[
+                        styles.fixButtonText, 
+                        isAnalyzing && styles.disabledText
+                      ]}>
+                        Fix Results
+                      </Text>
+                    </>
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity 
               style={styles.doneButton}
               onPress={() => router.back()}
