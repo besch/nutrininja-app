@@ -123,6 +123,17 @@ export const api = {
       });
     },
 
+    createBarcodeProduct: async (barcode: string, productData: any, date: string) => {
+      return await fetchApi("/api/meals/barcode/create", {
+        method: "POST",
+        body: JSON.stringify({ 
+          barcode, 
+          productData,
+          date
+        }),
+      });
+    },
+
     getMealsByDate: async (date?: string) => {
       const url = date ? `/api/meals?date=${date}` : '/api/meals';
       return fetchApi(url);
