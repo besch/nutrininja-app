@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { Text } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather, FontAwesome6 } from '@expo/vector-icons';
@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserData } from '@/store/userSlice';
 import { AppDispatch } from '@/store';
 import ActivityIcon from '@/components/ActivityIcon';
-import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSharedValue } from "react-native-reanimated";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -19,6 +18,30 @@ import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
+
+// Add a simple error boundary component
+class SimpleErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>Something went wrong.</Text>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
@@ -168,7 +191,6 @@ export default function ActivityDetailsScreen() {
       }
     } catch (error) {
       console.error('Failed to analyze activity description:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -177,7 +199,6 @@ export default function ActivityDetailsScreen() {
   const handleSave = async () => {
     if (!activity || !user) return;
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsLoading(true);
     try {
       const activityData = {
@@ -207,7 +228,6 @@ export default function ActivityDetailsScreen() {
       router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to log activity:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsLoading(false);
     }
@@ -219,6 +239,11 @@ export default function ActivityDetailsScreen() {
       calculateAndSetCalories(Number(duration), intensity);
     }
   }, [user?.weight, activity]);
+
+  // Memoize the back button handler to prevent unnecessary re-renders
+  const handleBackPress = useCallback(() => {
+    router.back();
+  }, [router]);
 
   if (!activity) {
     return (
@@ -256,312 +281,311 @@ export default function ActivityDetailsScreen() {
   // Render custom activity description input for 'custom' activity type
   if (activityId === 'custom') {
     return (
+      <SimpleErrorBoundary>
+        <View style={styles.container}>
+          <View style={styles.headerContainer}>
+            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+              <Feather name="arrow-left" size={24} color="black" />
+            </TouchableOpacity>
+            
+            <View style={styles.header}>
+              <MaterialCommunityIcons name="pencil-outline" size={24} color="black" />
+              <Text style={styles.headerTitle}>Describe Exercise</Text>
+            </View>
+          </View>
+          
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.descriptionContainer}>
+              {isDataLoading ? (
+                <>
+                  <ShimmerPlaceholder style={[styles.descriptionInput, { minHeight: 120 }]} />
+                  <ShimmerPlaceholder style={[styles.aiButton, { marginTop: 16, alignSelf: 'flex-start', height: 48 }]} />
+                </>
+              ) : (
+                <>
+                  <TextInput
+                    style={styles.descriptionInput}
+                    placeholder="Describe workout time, intensity, etc."
+                    value={description}
+                    onChangeText={setDescription}
+                    multiline
+                    numberOfLines={4}
+                    autoFocus={Platform.OS === 'ios' ? !activityToEditId : false}
+                  />
+                  
+                  <TouchableOpacity 
+                    style={[
+                      styles.aiButton, 
+                      !description.trim() && styles.aiButtonDisabled
+                    ]}
+                    onPress={analyzeDescription}
+                    disabled={!description.trim() || isAnalyzing}
+                  >
+                    {isAnalyzing ? (
+                      <View style={styles.aiButtonContent}>
+                        <ActivityIndicator color="#fff" size="small" />
+                      </View>
+                    ) : (
+                      <View style={styles.aiButtonContent}>
+                        <FontAwesome6 name="robot" size={18} color="#fff" />
+                        <Text style={styles.aiButtonText}>Analyze with AI</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
+              
+              {aiResult && (
+                <View style={styles.aiResultContainer}>
+                  <Text style={styles.aiResultTitle}>AI Analysis</Text>
+                  <Text style={styles.aiResultText}>
+                    Activity: {aiResult.activityType}
+                  </Text>
+                  <Text style={styles.aiResultText}>
+                    Duration: {aiResult.durationMinutes} minutes
+                  </Text>
+                  <Text style={styles.aiResultText}>
+                    Intensity: {aiResult.intensity}
+                  </Text>
+                  <Text style={styles.aiResultText}>
+                    Calories: {Math.round(aiResult.caloriesBurned)} kcal
+                  </Text>
+                </View>
+              )}
+              
+              <View style={styles.exampleContainer}>
+                <Text style={styles.exampleTitle}>Example:</Text>
+                <Text style={styles.exampleText}>
+                  Hiked a steep trail for 1 hour, lungs and legs burned
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+          
+          <TouchableOpacity
+            style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
+            onPress={handleSave}
+            disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
+          >
+            {isLoading ? (
+              <View style={styles.buttonContent}>
+                <LoadingDots color="#fff" size={6} />
+              </View>
+            ) : (
+              <Text style={styles.addButtonText}>Add Exercise</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </SimpleErrorBoundary>
+    );
+  }
+
+  // Regular activity details screen
+  return (
+    <SimpleErrorBoundary>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
             <Feather name="arrow-left" size={24} color="black" />
           </TouchableOpacity>
           
           <View style={styles.header}>
-            <MaterialCommunityIcons name="pencil-outline" size={24} color="black" />
-            <Text style={styles.headerTitle}>Describe Exercise</Text>
+            {activity.icon === IconNames.fitness || activity.icon === IconNames.pencilOutline ? (
+              <MaterialCommunityIcons name="pencil-outline" size={24} color="#000" />
+            ) : (
+              <ActivityIcon name={activity.icon} size={24} color="#000" />
+            )}
+            <Text style={styles.headerTitle}>{activity.name}</Text>
           </View>
         </View>
-        
+
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.descriptionContainer}>
-            {isDataLoading ? (
-              <>
-                <ShimmerPlaceholder style={[styles.descriptionInput, { minHeight: 120 }]} />
-                <ShimmerPlaceholder style={[styles.aiButton, { marginTop: 16, alignSelf: 'flex-start', height: 48 }]} />
-              </>
-            ) : (
-              <>
-                <TextInput
-                  style={styles.descriptionInput}
-                  placeholder="Describe workout time, intensity, etc."
-                  value={description}
-                  onChangeText={setDescription}
-                  multiline
-                  numberOfLines={4}
-                  autoFocus={!activityToEditId}
-                />
-                
-                <TouchableOpacity 
-                  style={[
-                    styles.aiButton, 
-                    !description.trim() && styles.aiButtonDisabled
-                  ]}
-                  onPress={analyzeDescription}
-                  disabled={!description.trim() || isAnalyzing}
-                >
-                  {isAnalyzing ? (
-                    <View style={styles.aiButtonContent}>
-                      <ActivityIndicator color="#fff" size="small" />
-                    </View>
-                  ) : (
-                    <View style={styles.aiButtonContent}>
-                      <FontAwesome6 name="robot" size={18} color="#fff" style={styles.aiButtonIcon} />
-                      <Text style={styles.aiButtonText}>Analyze with AI</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="av-timer" size={24} color="black" />
+              <Text style={styles.sectionTitle}>Set intensity</Text>
+            </View>
             
-            {aiResult && (
-              <View style={styles.aiResultContainer}>
-                <Text style={styles.aiResultTitle}>AI Analysis</Text>
-                <Text style={styles.aiResultText}>
-                  Activity: {aiResult.activityType}
-                </Text>
-                <Text style={styles.aiResultText}>
-                  Duration: {aiResult.durationMinutes} minutes
-                </Text>
-                <Text style={styles.aiResultText}>
-                  Intensity: {aiResult.intensity}
-                </Text>
-                <Text style={styles.aiResultText}>
-                  Calories: {Math.round(aiResult.caloriesBurned)} kcal
-                </Text>
+            <View style={styles.intensityContainer}>
+              <View style={styles.intensityOptionsContainer}>
+                {isDataLoading ? (
+                  // Shimmer placeholders for intensity options
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <View key={i} style={styles.intensityOption}>
+                        <ShimmerPlaceholder style={{ width: 24, height: 24, borderRadius: 4, marginRight: 10 }} />
+                        <View style={styles.intensityTextContainer}>
+                          <ShimmerPlaceholder style={{ width: 60, height: 24, borderRadius: 4, marginBottom: 5 }} />
+                          <ShimmerPlaceholder style={{ width: 200, height: 16, borderRadius: 4, marginBottom: 5 }} />
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.intensityOption}
+                      onPress={() => {
+                        progress.value = 2;
+                        setIntensity('high');
+                        calculateAndSetCalories(Number(duration), 'high');
+                      }}
+                    >
+                      <View style={[styles.intensityCheckbox, intensity === 'high' ? styles.intensityCheckboxActive : {}]}>
+                        {intensity === 'high' && <Feather name="check" size={16} color="#fff" />}
+                      </View>
+                      <View style={styles.intensityTextContainer}>
+                        <Text style={[styles.intensityLabel, intensity === 'high' ? styles.activeIntensity : {}]}>
+                          High
+                        </Text>
+                        <Text style={[styles.intensityDescription, intensity === 'high' ? styles.activeDescription : {}]}>
+                          {getIntensityDescription('high')}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={styles.intensityOption}
+                      onPress={() => {
+                        progress.value = 1;
+                        setIntensity('medium');
+                        calculateAndSetCalories(Number(duration), 'medium');
+                      }}
+                    >
+                      <View style={[styles.intensityCheckbox, intensity === 'medium' ? styles.intensityCheckboxActive : {}]}>
+                        {intensity === 'medium' && <Feather name="check" size={16} color="#fff" />}
+                      </View>
+                      <View style={styles.intensityTextContainer}>
+                        <Text style={[styles.intensityLabel, intensity === 'medium' ? styles.activeIntensity : {}]}>
+                          Medium
+                        </Text>
+                        <Text style={[styles.intensityDescription, intensity === 'medium' ? styles.activeDescription : {}]}>
+                          {getIntensityDescription('medium')}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={styles.intensityOption}
+                      onPress={() => {
+                        progress.value = 0;
+                        setIntensity('low');
+                        calculateAndSetCalories(Number(duration), 'low');
+                      }}
+                    >
+                      <View style={[styles.intensityCheckbox, intensity === 'low' ? styles.intensityCheckboxActive : {}]}>
+                        {intensity === 'low' && <Feather name="check" size={16} color="#fff" />}
+                      </View>
+                      <View style={styles.intensityTextContainer}>
+                        <Text style={[styles.intensityLabel, intensity === 'low' ? styles.activeIntensity : {}]}>
+                          Low
+                        </Text>
+                        <Text style={[styles.intensityDescription, intensity === 'low' ? styles.activeDescription : {}]}>
+                          {getIntensityDescription('low')}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
-            )}
+            </View>
+          </View>
+          
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Feather name="clock" size={24} color="#000" />
+              <Text style={styles.sectionTitle}>Duration</Text>
+            </View>
             
-            <View style={styles.exampleContainer}>
-              <Text style={styles.exampleTitle}>Example:</Text>
-              <Text style={styles.exampleText}>
-                Hiked a steep trail for 1 hour, lungs and legs burned
-              </Text>
+            <View style={styles.durationContainer}>
+              {isDataLoading ? (
+                // Shimmer placeholders for duration buttons
+                <>
+                  {[1, 2, 3, 4].map((i) => (
+                    <ShimmerPlaceholder 
+                      key={i}
+                      style={{ 
+                        width: '48%', 
+                        height: 44, 
+                        borderRadius: 25, 
+                        marginBottom: 10 
+                      }} 
+                    />
+                  ))}
+                </>
+              ) : (
+                <>
+                  {durationOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.durationButton,
+                        duration === option.value && styles.durationButtonActive
+                      ]}
+                      onPress={() => handleDurationChange(option.value)}
+                    >
+                      <Text style={[
+                        styles.durationButtonText,
+                        duration === option.value && styles.durationButtonTextActive
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </View>
+            
+            <View style={styles.customDurationContainer}>
+              <Text style={styles.customDurationLabel}>Custom duration (minutes)</Text>
+              {isDataLoading ? (
+                <ShimmerPlaceholder style={{ height: 48, borderRadius: 8 }} />
+              ) : (
+                <TextInput
+                  style={styles.customDurationInput}
+                  value={duration}
+                  onChangeText={(text) => {
+                    const numericValue = text.replace(/[^0-9]/g, '');
+                    handleDurationChange(numericValue);
+                  }}
+                  keyboardType="number-pad"
+                  placeholder="Enter minutes"
+                  maxLength={3}
+                />
+              )}
+            </View>
+            
+            <View style={styles.caloriesContainer}>
+              <Text style={styles.caloriesLabel}>Estimated calories burned</Text>
+              {isDataLoading ? (
+                <ShimmerPlaceholder style={{ width: 100, height: 32, borderRadius: 4 }} />
+              ) : (
+                <Text style={styles.caloriesValue}>{calories} kcal</Text>
+              )}
             </View>
           </View>
         </ScrollView>
         
         <TouchableOpacity
-          style={[styles.addButton, (isDataLoading || !isValid || !description.trim() || !aiResult) && styles.addButtonDisabled]}
+          style={[
+            styles.addButton, 
+            (isDataLoading || !isValid) && styles.addButtonDisabled
+          ]}
           onPress={handleSave}
-          disabled={isDataLoading || !isValid || !description.trim() || !aiResult || isLoading}
+          disabled={isDataLoading || !isValid}
         >
           {isLoading ? (
             <View style={styles.buttonContent}>
               <LoadingDots color="#fff" size={6} />
             </View>
           ) : (
-            <Text style={styles.addButtonText}>Add Exercise</Text>
+            <Text style={styles.addButtonText}>Add</Text>
           )}
         </TouchableOpacity>
       </View>
-    );
-  }
-
-  // Regular activity details screen
-  return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="black" />
-        </TouchableOpacity>
-        
-        <View style={styles.header}>
-          {activity.icon === IconNames.fitness ? (
-            <MaterialCommunityIcons name="pencil-outline" size={24} color="#000" />
-          ) : (
-            <ActivityIcon name={activity.icon} size={24} color="#000" />
-          )}
-          <Text style={styles.headerTitle}>{activity.name}</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="av-timer" size={24} color="black" />
-            <Text style={styles.sectionTitle}>Set intensity</Text>
-          </View>
-          
-          <View style={styles.intensityContainer}>
-            <View style={styles.intensityOptionsContainer}>
-              {isDataLoading ? (
-                // Shimmer placeholders for intensity options
-                <>
-                  {[1, 2, 3].map((i) => (
-                    <View key={i} style={styles.intensityOption}>
-                      <ShimmerPlaceholder style={{ width: 24, height: 24, borderRadius: 4, marginRight: 10 }} />
-                      <View style={styles.intensityTextContainer}>
-                        <ShimmerPlaceholder style={{ width: 60, height: 24, borderRadius: 4, marginBottom: 5 }} />
-                        <ShimmerPlaceholder style={{ width: 200, height: 16, borderRadius: 4, marginBottom: 5 }} />
-                      </View>
-                    </View>
-                  ))}
-                </>
-              ) : (
-                <>
-                  <TouchableOpacity 
-                    style={styles.intensityOption}
-                    onPress={() => {
-                      progress.value = 2;
-                      setIntensity('high');
-                      calculateAndSetCalories(Number(duration), 'high');
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }}
-                  >
-                    <View style={[styles.intensityCheckbox, intensity === 'high' ? styles.intensityCheckboxActive : {}]}>
-                      {intensity === 'high' && <Feather name="check" size={16} color="#fff" />}
-                    </View>
-                    <View style={styles.intensityTextContainer}>
-                      <Text style={[styles.intensityLabel, intensity === 'high' ? styles.activeIntensity : {}]}>
-                        High
-                      </Text>
-                      <Text style={[styles.intensityDescription, intensity === 'high' ? styles.activeDescription : {}]}>
-                        {getIntensityDescription('high')}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.intensityOption}
-                    onPress={() => {
-                      progress.value = 1;
-                      setIntensity('medium');
-                      calculateAndSetCalories(Number(duration), 'medium');
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }}
-                  >
-                    <View style={[styles.intensityCheckbox, intensity === 'medium' ? styles.intensityCheckboxActive : {}]}>
-                      {intensity === 'medium' && <Feather name="check" size={16} color="#fff" />}
-                    </View>
-                    <View style={styles.intensityTextContainer}>
-                      <Text style={[styles.intensityLabel, intensity === 'medium' ? styles.activeIntensity : {}]}>
-                        Medium
-                      </Text>
-                      <Text style={[styles.intensityDescription, intensity === 'medium' ? styles.activeDescription : {}]}>
-                        {getIntensityDescription('medium')}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.intensityOption}
-                    onPress={() => {
-                      progress.value = 0;
-                      setIntensity('low');
-                      calculateAndSetCalories(Number(duration), 'low');
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }}
-                  >
-                    <View style={[styles.intensityCheckbox, intensity === 'low' ? styles.intensityCheckboxActive : {}]}>
-                      {intensity === 'low' && <Feather name="check" size={16} color="#fff" />}
-                    </View>
-                    <View style={styles.intensityTextContainer}>
-                      <Text style={[styles.intensityLabel, intensity === 'low' ? styles.activeIntensity : {}]}>
-                        Low
-                      </Text>
-                      <Text style={[styles.intensityDescription, intensity === 'low' ? styles.activeDescription : {}]}>
-                        {getIntensityDescription('low')}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Feather name="clock" size={24} color="#000" />
-            <Text style={styles.sectionTitle}>Duration</Text>
-          </View>
-          
-          <View style={styles.durationContainer}>
-            {isDataLoading ? (
-              // Shimmer placeholders for duration buttons
-              <>
-                {[1, 2, 3, 4].map((i) => (
-                  <ShimmerPlaceholder 
-                    key={i}
-                    style={{ 
-                      width: '48%', 
-                      height: 44, 
-                      borderRadius: 25, 
-                      marginBottom: 10 
-                    }} 
-                  />
-                ))}
-              </>
-            ) : (
-              <>
-                {durationOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.durationButton,
-                      duration === option.value && styles.durationButtonActive
-                    ]}
-                    onPress={() => handleDurationChange(option.value)}
-                  >
-                    <Text style={[
-                      styles.durationButtonText,
-                      duration === option.value && styles.durationButtonTextActive
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </>
-            )}
-          </View>
-          
-          <View style={styles.customDurationContainer}>
-            <Text style={styles.customDurationLabel}>Custom duration (minutes)</Text>
-            {isDataLoading ? (
-              <ShimmerPlaceholder style={{ height: 48, borderRadius: 8 }} />
-            ) : (
-              <TextInput
-                style={styles.customDurationInput}
-                value={duration}
-                onChangeText={(text) => {
-                  const numericValue = text.replace(/[^0-9]/g, '');
-                  handleDurationChange(numericValue);
-                }}
-                keyboardType="number-pad"
-                placeholder="Enter minutes"
-                maxLength={3}
-              />
-            )}
-          </View>
-          
-          <View style={styles.caloriesContainer}>
-            <Text style={styles.caloriesLabel}>Estimated calories burned</Text>
-            {isDataLoading ? (
-              <ShimmerPlaceholder style={{ width: 100, height: 32, borderRadius: 4 }} />
-            ) : (
-              <Text style={styles.caloriesValue}>{calories} kcal</Text>
-            )}
-          </View>
-        </View>
-      </ScrollView>
-      
-      <TouchableOpacity
-        style={[
-          styles.addButton, 
-          (isDataLoading || !isValid) && styles.addButtonDisabled
-        ]}
-        onPress={handleSave}
-        disabled={isDataLoading || !isValid}
-      >
-        {isLoading ? (
-          <View style={styles.buttonContent}>
-            <LoadingDots color="#fff" size={6} />
-          </View>
-        ) : (
-          <Text style={styles.addButtonText}>Add</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+    </SimpleErrorBoundary>
   );
 }
-
-const { height, width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
