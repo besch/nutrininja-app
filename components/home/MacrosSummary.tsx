@@ -69,7 +69,7 @@ const MacroCard: React.FC<{
     <View style={styles.macroCard}>
       <View style={styles.macroCardContent}>
         <Text style={[styles.macroValue, isNegative && styles.negativeValue]}>
-          {Math.abs(value)}g
+          {Math.round(Math.abs(value))}g
         </Text>
         <Text 
           style={[styles.macroLabel, isNegative && styles.negativeValue]}
