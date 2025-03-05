@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Dimensions, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { Text } from '@rneui/themed';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather, FontAwesome6 } from '@expo/vector-icons';
@@ -18,30 +18,6 @@ import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
-
-// Add a simple error boundary component
-class SimpleErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
-  constructor(props: {children: React.ReactNode}) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <Text>Something went wrong.</Text>
-        </View>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 export default function ActivityDetailsScreen() {
   const router = useRouter();
@@ -281,7 +257,6 @@ export default function ActivityDetailsScreen() {
   // Render custom activity description input for 'custom' activity type
   if (activityId === 'custom') {
     return (
-      <SimpleErrorBoundary>
         <View style={styles.container}>
           <View style={styles.headerContainer}>
             <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
@@ -376,13 +351,11 @@ export default function ActivityDetailsScreen() {
             )}
           </TouchableOpacity>
         </View>
-      </SimpleErrorBoundary>
     );
   }
 
   // Regular activity details screen
   return (
-    <SimpleErrorBoundary>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
@@ -583,7 +556,6 @@ export default function ActivityDetailsScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </SimpleErrorBoundary>
   );
 }
 
