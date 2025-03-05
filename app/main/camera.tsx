@@ -265,10 +265,8 @@ export const CameraScreen = () => {
     setScannedBarcode(data);
     setProcessingBarcode(true);
     
-    // Process the barcode with a slight delay to show the scanning animation
-    setTimeout(() => {
-      createBarcodeProductMutation.mutate(data);
-    }, 500);
+    // Process the barcode immediately instead of using setTimeout
+    createBarcodeProductMutation.mutate(data);
   };
 
   const isLoading = createMealMutation.isPending || createBarcodeProductMutation.isPending;
@@ -312,8 +310,7 @@ export const CameraScreen = () => {
 
   return (
     <View style={styles.container}>
-      {(isLoading || processingBarcode) && <LoadingSpinner />}
-      
+      {/* Always render the camera view */}
       <CameraView 
         ref={cameraRef} 
         style={styles.camera} 
@@ -324,17 +321,17 @@ export const CameraScreen = () => {
         onBarcodeScanned={isBarcodeMode && !scannedBarcode && !processingBarcode ? handleBarcodeScan : undefined}
       >
         <TouchableOpacity 
-          style={[styles.closeButton, isLoading && styles.disabledButton]} 
+          style={[styles.closeButton, (isLoading || processingBarcode) && styles.disabledButton]} 
           onPress={() => router.back()}
-          disabled={isLoading}
+          disabled={isLoading || processingBarcode}
         >
           <MaterialIcons name="close" size={24} color="white" />
         </TouchableOpacity>
         
         {!isBarcodeMode && (
           <TouchableOpacity 
-            style={[styles.infoButton, isLoading && styles.disabledButton]}
-            disabled={isLoading}
+            style={[styles.infoButton, (isLoading || processingBarcode) && styles.disabledButton]}
+            disabled={isLoading || processingBarcode}
             onPress={handleInfoPress}
           >
             <MaterialIcons name="info" size={24} color="white" />
@@ -351,6 +348,20 @@ export const CameraScreen = () => {
               <LoadingSpinner />
             </View>
           </View>
+        ) : processingBarcode ? (
+          <View style={styles.overlay}>
+            <View style={[
+              styles.scanFrame, 
+              styles.barcodeFrame,
+              styles.processingFrame
+            ]} />
+            <View style={styles.processingOverlay}>
+              {/* <Text style={styles.barcodeInstructions}>
+                Processing barcode: {scannedBarcode}
+              </Text> */}
+              <LoadingSpinner />
+            </View>
+          </View>
         ) : (
           <>
             <View style={styles.overlay}>
@@ -364,34 +375,29 @@ export const CameraScreen = () => {
                   Position barcode within the frame
                 </Text>
               )}
-              {isBarcodeMode && processingBarcode && (
-                <Text style={styles.barcodeInstructions}>
-                  Processing barcode...
-                </Text>
-              )}
             </View>
 
             {!isBarcodeMode && (
               <View style={styles.bottomContainer}>
                 <View style={styles.optionsContainer}>
                   <TouchableOpacity 
-                    style={[styles.option, isLoading && styles.disabledOption]} 
+                    style={[styles.option, (isLoading || processingBarcode) && styles.disabledOption]} 
                     onPress={handleScanFood}
-                    disabled={isLoading}
+                    disabled={isLoading || processingBarcode}
                   >
-                    <MaterialIcons name="camera-alt" size={24} color={isLoading ? "#999" : "black"} style={styles.optionIcon} />
-                    <Text style={[styles.optionText, isLoading && styles.disabledText]}>
+                    <MaterialIcons name="camera-alt" size={24} color={(isLoading || processingBarcode) ? "#999" : "black"} style={styles.optionIcon} />
+                    <Text style={[styles.optionText, (isLoading || processingBarcode) && styles.disabledText]}>
                       {isBarcodeMode ? "Scan Barcode" : "Scan Food"}
                     </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
-                    style={[styles.option, isLoading && styles.disabledOption]} 
+                    style={[styles.option, (isLoading || processingBarcode) && styles.disabledOption]} 
                     onPress={handleGallery}
-                    disabled={isLoading}
+                    disabled={isLoading || processingBarcode}
                   >
-                    <MaterialIcons name="photo-library" size={24} color={isLoading ? "#999" : "black"} style={styles.optionIcon} />
-                    <Text style={[styles.optionText, isLoading && styles.disabledText]}>Gallery</Text>
+                    <MaterialIcons name="photo-library" size={24} color={(isLoading || processingBarcode) ? "#999" : "black"} style={styles.optionIcon} />
+                    <Text style={[styles.optionText, (isLoading || processingBarcode) && styles.disabledText]}>Gallery</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -569,6 +575,22 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     fontSize: 16,
+  },
+  processingFrame: {
+    borderColor: "#00FF00",
+    borderWidth: 3,
+    opacity: 0.7,
+  },
+  processingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
 });
 
