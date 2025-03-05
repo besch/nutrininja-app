@@ -31,7 +31,23 @@ const processImage = async (imageUri: string, selectedDate?: string) => {
   );
 
   const now = new Date();
-  const timestamp = selectedDate ? moment(selectedDate, 'YYYY-MM-DD').toDate() : now;
+  let timestamp: Date;
+  
+  if (selectedDate) {
+    // If date is provided, use it for the date part but keep current time
+    const dateObj = moment(selectedDate, 'YYYY-MM-DD').toDate();
+    timestamp = new Date(
+      dateObj.getFullYear(),
+      dateObj.getMonth(),
+      dateObj.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds()
+    );
+  } else {
+    timestamp = now;
+  }
   
   return { ...manipulatedPhoto, timestamp };
 };
