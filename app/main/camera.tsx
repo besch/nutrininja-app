@@ -152,10 +152,8 @@ export const CameraScreen = () => {
       
       setProcessingBarcode(false);
       setScannedBarcode(null);
-      router.back();
-
-      // Track successful meal addition
       trackMealAdded(true, 'camera');
+      router.back();
     },
     onError: (error) => {
       setProcessingBarcode(false);
