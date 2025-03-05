@@ -40,9 +40,8 @@ export default function ActivityDetailsScreen() {
   const isMetric = useSelector(selectIsMetric);
   
   const [intensity, setIntensity] = useState('medium');
-  const progress = useSharedValue(1); // Default to medium (middle position)
+  const progress = useSharedValue(1);
   
-  // Duration options
   const durationOptions = [
     { value: '15', label: '15 mins' },
     { value: '30', label: '30 mins' },
@@ -50,12 +49,10 @@ export default function ActivityDetailsScreen() {
     { value: '90', label: '90 mins' },
   ];
 
-  // Fetch user data when component mounts
   useEffect(() => {
     dispatch(fetchUserData());
   }, [dispatch]);
 
-  // Fetch existing activity data if editing
   useEffect(() => {
     const fetchActivityData = async () => {
       if (activityToEditId) {
@@ -69,7 +66,6 @@ export default function ActivityDetailsScreen() {
             setCalories(activityToEdit.calories_burned.toString());
             setIntensity(activityToEdit.intensity || 'medium');
             
-            // Set progress value based on intensity
             if (activityToEdit.intensity === 'low') {
               progress.value = 0;
             } else if (activityToEdit.intensity === 'high') {
@@ -78,7 +74,6 @@ export default function ActivityDetailsScreen() {
               progress.value = 1;
             }
 
-            // Set description if available
             if (activityToEdit.description) {
               setDescription(activityToEdit.description);
             }
@@ -92,35 +87,33 @@ export default function ActivityDetailsScreen() {
     };
 
     fetchActivityData();
-  }, [activityToEditId, selectedDate, progress]);
+  }, [activityToEditId, selectedDate]);
 
   const activity = activityId === 'custom' 
     ? { 
         id: 'custom', 
         name: 'Describe Exercise', 
         icon: IconNames.pencilOutline, 
-        met: 5, // Default MET value
-        caloriesPerHour: 300 // Adding required property
+        met: 5,
+        caloriesPerHour: 300
       } as ActivityType 
     : ACTIVITY_CATEGORIES.reduce((found: ActivityType | null, category) => {
         if (found) return found;
         return category.activities.find(a => a.id === activityId) || null;
       }, null) || { 
-        // Fallback for AI-generated activities not in predefined categories
         id: activityId || 'unknown',
         name: activityId ? activityId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity',
         icon: IconNames.pencilOutline,
-        met: 5, // Default MET value
-        caloriesPerHour: 300 // Adding required property
+        met: 5,
+        caloriesPerHour: 300
       } as ActivityType;
 
   const calculateAndSetCalories = (durationValue: number, intensityLevel: string) => {
     if (activity && user?.weight) {
-      // Apply intensity multiplier
       const intensityMultiplier = 
         intensityLevel === 'low' ? 0.7 : 
         intensityLevel === 'high' ? 1.3 : 
-        1.0; // medium
+        1.0;
       
       const calculated = calculateCaloriesBurned(
         user.weight, 
@@ -133,8 +126,9 @@ export default function ActivityDetailsScreen() {
   };
 
   const handleDurationChange = (value: string) => {
-    setDuration(value);
-    calculateAndSetCalories(Number(value) || 0, intensity);
+    const stringValue = value ? value.toString() : '';
+    setDuration(stringValue);
+    calculateAndSetCalories(Number(stringValue) || 0, intensity);
   };
 
   const analyzeDescription = async () => {
@@ -147,7 +141,6 @@ export default function ActivityDetailsScreen() {
       if (result) {
         setAiResult(result);
         
-        // Update form with AI results
         if (result.durationMinutes) {
           setDuration(result.durationMinutes.toString());
         }
@@ -187,20 +180,16 @@ export default function ActivityDetailsScreen() {
       };
 
       if (activityToEditId) {
-        // Update existing activity
         await api.activities.updateActivity(activityToEditId, activityData);
       } else {
-        // Create new activity
         await api.activities.logActivity(activityData);
       }
 
-      // Invalidate relevant queries to refresh the data
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['progress'] }),
         queryClient.invalidateQueries({ queryKey: ['meals-summary'] })
       ]);
 
-      // Navigate to home screen
       router.replace('/(tabs)');
     } catch (error) {
       console.error('Failed to log activity:', error);
@@ -209,14 +198,12 @@ export default function ActivityDetailsScreen() {
     }
   };
 
-  // Calculate initial calories whenever user data or activity changes
   useEffect(() => {
     if (user?.weight && activity) {
       calculateAndSetCalories(Number(duration), intensity);
     }
   }, [user?.weight, activity]);
 
-  // Memoize the back button handler to prevent unnecessary re-renders
   const handleBackPress = useCallback(() => {
     router.back();
   }, [router]);
@@ -231,7 +218,6 @@ export default function ActivityDetailsScreen() {
 
   const isValid = Number(duration) > 0 && Number(calories) > 0;
 
-  // Get intensity description based on activity type and user's unit preference
   const getIntensityDescription = (intensityLevel: string) => {
     if (activity.id === 'running' || activity.id.includes('run')) {
       return intensityLevel === 'high' 
@@ -254,7 +240,6 @@ export default function ActivityDetailsScreen() {
     }
   };
 
-  // Render custom activity description input for 'custom' activity type
   if (activityId === 'custom') {
     return (
         <View style={styles.container}>
@@ -282,7 +267,7 @@ export default function ActivityDetailsScreen() {
                     style={styles.descriptionInput}
                     placeholder="Describe workout time, intensity, etc."
                     value={description}
-                    onChangeText={setDescription}
+                    onChangeText={(text) => setDescription(text)}
                     multiline
                     numberOfLines={4}
                     autoFocus={Platform.OS === 'ios' ? !activityToEditId : false}
@@ -354,7 +339,6 @@ export default function ActivityDetailsScreen() {
     );
   }
 
-  // Regular activity details screen
   return (
       <View style={styles.container}>
         <View style={styles.headerContainer}>
@@ -382,7 +366,6 @@ export default function ActivityDetailsScreen() {
             <View style={styles.intensityContainer}>
               <View style={styles.intensityOptionsContainer}>
                 {isDataLoading ? (
-                  // Shimmer placeholders for intensity options
                   <>
                     {[1, 2, 3].map((i) => (
                       <View key={i} style={styles.intensityOption}>
@@ -472,7 +455,6 @@ export default function ActivityDetailsScreen() {
             
             <View style={styles.durationContainer}>
               {isDataLoading ? (
-                // Shimmer placeholders for duration buttons
                 <>
                   {[1, 2, 3, 4].map((i) => (
                     <ShimmerPlaceholder 
@@ -521,7 +503,7 @@ export default function ActivityDetailsScreen() {
                     const numericValue = text.replace(/[^0-9]/g, '');
                     handleDurationChange(numericValue);
                   }}
-                  keyboardType="number-pad"
+                  keyboardType="numeric"
                   placeholder="Enter minutes"
                   maxLength={3}
                 />
@@ -741,7 +723,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     lineHeight: 24,
   },
-  // Custom activity description styles
   descriptionContainer: {
     marginBottom: 20,
   },
