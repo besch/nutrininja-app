@@ -287,7 +287,7 @@ export default function ActivityDetailsScreen() {
                     </View>
                   ) : (
                     <View style={styles.aiButtonContent}>
-                      <FontAwesome6 name="robot" size={18} color="#fff" />
+                      <FontAwesome6 name="robot" size={18} color="#fff" style={{ marginRight: 8 }} />
                       <Text style={styles.aiButtonText}>Analyze with AI</Text>
                     </View>
                   )}
