@@ -21,6 +21,7 @@
       "buildNumber": "3",
       "infoPlist": {
         "NSCameraUsageDescription": "Nutri Ninja needs camera access to analyze your food and provide accurate nutritional information.",
+        "NSPhotoLibraryUsageDescription": "Nutri Ninja needs access to your photo library so you can select food images for nutritional analysis to get detailed nutritional information.",
         "FacebookAppID": "609272158544660",
         "FacebookClientToken": "31f6d1a233c625d2769f5f53b3be442c",
         "FacebookDisplayName": "Nutri Ninja",
