@@ -39,3 +39,6 @@ debug.keystore
 
 android
 ios
+
+eas.json
+app.json
